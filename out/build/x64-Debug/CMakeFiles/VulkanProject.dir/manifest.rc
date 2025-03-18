@@ -1,0 +1,2 @@
+#pragma code_page(65001)
+1 /* CREATEPROCESS_MANIFEST_RESOURCE_ID */ 24 /* RT_MANIFEST */ "C:/Users/41384/Desktop/学习笔记/计算机图形学/vulkan/out/build/x64-Debug/CMakeFiles/VulkanProject.dir/embed.manifest"
