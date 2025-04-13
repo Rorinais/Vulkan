@@ -33,11 +33,61 @@ file(GLOB_RECURSE SOURCES
     "${CMAKE_SOURCE_DIR}/renderer/*.hpp"
 )
 
-file(GLOB SHADER_FILES
-    "${CMAKE_SOURCE_DIR}/renderer/resources/shaders/*"
+add_executable(${PROJECT_NAME} ${SOURCES})
+
+#=============================shader==================================
+# 使用CONFIGURE_DEPENDS自动跟踪新增/删除的Shader文件（需要CMake 3.12+）
+if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.12)
+    file(GLOB_RECURSE SHADER_FILES CONFIGURE_DEPENDS 
+        "${CMAKE_SOURCE_DIR}/renderer/resources/shaders/*.vert"
+        "${CMAKE_SOURCE_DIR}/renderer/resources/shaders/*.frag"
+        "${CMAKE_SOURCE_DIR}/renderer/resources/shaders/*.comp"
+        "${CMAKE_SOURCE_DIR}/renderer/resources/shaders/*.glsl"
+    )
+else()
+    file(GLOB_RECURSE SHADER_FILES
+        "${CMAKE_SOURCE_DIR}/renderer/resources/shaders/*.vert"
+        "${CMAKE_SOURCE_DIR}/renderer/resources/shaders/*.frag"
+        "${CMAKE_SOURCE_DIR}/renderer/resources/shaders/*.comp"
+        "${CMAKE_SOURCE_DIR}/renderer/resources/shaders/*.glsl"
+    )
+endif()
+
+set(SHADER_TARGETS)  # 存储所有生成的Shader标记文件
+
+foreach(shader_file IN LISTS SHADER_FILES)
+    # 计算相对路径（相对于renderer/resources/shaders）
+    file(RELATIVE_PATH relative_path 
+        "${CMAKE_SOURCE_DIR}/renderer/resources/shaders" 
+        ${shader_file}
+    )
+    
+    # 中间标记文件路径（构建目录中）
+    get_filename_component(relative_dir "${relative_path}" DIRECTORY)
+    set(flag_file "${CMAKE_CURRENT_BINARY_DIR}/shaders_copied/${relative_path}.flag")
+    
+    # 创建目标目录并复制文件，最后生成标记文件
+    add_custom_command(
+        OUTPUT ${flag_file}
+        COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_FILE_DIR:${PROJECT_NAME}>/resources/shaders/${relative_dir}"
+        COMMAND ${CMAKE_COMMAND} -E copy ${shader_file} "$<TARGET_FILE_DIR:${PROJECT_NAME}>/resources/shaders/${relative_path}"
+        COMMAND ${CMAKE_COMMAND} -E touch ${flag_file}  # 创建标记文件以指示完成
+        DEPENDS ${shader_file}
+        COMMENT "Updating shader: ${relative_path}"
+    )
+    
+    list(APPEND SHADER_TARGETS ${flag_file})
+endforeach()
+
+# 创建全局Shader复制目标
+add_custom_target(CopyShaders ALL
+    DEPENDS ${SHADER_TARGETS}
+    COMMENT "Ensuring latest shader files"
 )
 
-add_executable(${PROJECT_NAME} ${SOURCES})
+# 将Shader复制目标绑定到主程序
+add_dependencies(${PROJECT_NAME} CopyShaders)
+#=============================shader==================================
 
 # 平台判断逻辑
 if(MSVC)
