@@ -3,6 +3,9 @@
 
 class CommandSystem {
 public:
+    using DescriptorSetMap = std::unordered_map<uint32_t, VkDescriptorSet>;
+    using DescriptorSetCollection = std::vector<DescriptorSetMap>;
+
     struct FrameContext {
         VkSemaphore imageAvailable = VK_NULL_HANDLE;
         VkSemaphore renderFinished = VK_NULL_HANDLE;
@@ -21,21 +24,27 @@ public:
     ~CommandSystem();
 
     void createCommandPool(QueueFamilyIndices queueFamilyIndices);
+
     void createCommandBuffers(
-        const std::vector<VkFramebuffer>& framebuffers, 
+        const std::vector<VkFramebuffer>& framebuffers,
         VkPipeline graphicsPipeline,
         VkBuffer& vertexBuffer,
         const uint32_t vertexCount,
-        VkBuffer& IndexBuffer,
-        const uint32_t IndexCount);
+        VkBuffer& indexBuffer,
+        const uint32_t indexCount,
+        const DescriptorSetCollection& descriptorSets, 
+        VkPipelineLayout pipelineLayout);
+
     void recreateCommandBuffers(
         const std::vector<VkFramebuffer>& framebuffers,
         VkPipeline graphicsPipeline,
-        VkExtent2D newExtent, 
+        VkExtent2D newExtent,
         VkBuffer& vertexBuffer,
         const uint32_t vertexCount,
-        VkBuffer& IndexBuffer,
-        const uint32_t IndexCount);
+        VkBuffer& indexBuffer,
+        const uint32_t indexCount,
+        const DescriptorSetCollection& descriptorSets);
+
     void createSyncObjects(uint32_t swapChainImageCount);
 
     bool beginFrame(VkSwapchainKHR swapChain, uint32_t& imageIndex, bool& needRecreate);
@@ -57,15 +66,18 @@ private:
         VkFramebuffer framebuffer,
         VkPipeline graphicsPipeline,
         VkBuffer& vertexBuffer,
-        const uint32_t vertexCount, 
-        VkBuffer& IndexBuffer,
-        const uint32_t IndexCount)const;
+        const uint32_t vertexCount,
+        VkBuffer& indexBuffer,
+        const uint32_t indexCount,
+        const DescriptorSetMap& descriptorSets 
+    ) const;
 
     VkDevice mDevice = VK_NULL_HANDLE;
     VkQueue mGraphicsQueue = VK_NULL_HANDLE;
     VkQueue mPresentQueue = VK_NULL_HANDLE;
     VkRenderPass mRenderPass = VK_NULL_HANDLE;
     VkExtent2D mSwapChainExtent{};
+	VkPipelineLayout mPipelineLayout = VK_NULL_HANDLE;
 
     VkCommandPool mCommandPool = VK_NULL_HANDLE;
     std::vector<VkCommandBuffer> mCommandBuffers{};

@@ -20,6 +20,7 @@ public:
         RasterizationConfig rasterization;
         MultisampleConfig multisample;
         ColorBlendConfig colorBlend;
+		VkPipelineLayout pipelineLayout = VK_NULL_HANDLE;
     };
 
     PipelineFactory(VkDevice device);
@@ -27,13 +28,14 @@ public:
 
     void configure(const PipelineConfig& config);
 
-    void createGraphicsPipeline(VkShaderModule vertShaderPath,VkShaderModule fragShaderPath);
+    void createGraphicsPipeline(
+        VkShaderModule vertShaderPath,
+        VkShaderModule fragShaderPath);
 
-    void createRenderPass(VkFormat SwapChainImageFormat);
+    void createRenderPass(RenderPassBuilder::RenderPassConfig& config);
 
     void cleanup();
 
-    VkPipelineLayout& getPipelineLayout() { return mPipelineLayout; }
     VkRenderPass& getRenderPass() { return mRenderPass; }
     VkPipeline& getGraphicsPipeline() { return mGraphicsPipeline; }
 
@@ -41,7 +43,6 @@ private:
     PipelineConfig mConfig;
     VkDevice mDevice = VK_NULL_HANDLE;
     VkRenderPass mRenderPass = VK_NULL_HANDLE;
-    VkPipelineLayout mPipelineLayout = VK_NULL_HANDLE;
     VkPipeline mGraphicsPipeline = VK_NULL_HANDLE;
 };
 
