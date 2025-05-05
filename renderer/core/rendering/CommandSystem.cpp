@@ -62,42 +62,45 @@ void CommandSystem::createCommandPool(QueueFamilyIndices queueFamilyIndices) {
 void CommandSystem::createCommandBuffers(
     const std::vector<VkFramebuffer>& framebuffers,
     VkPipeline graphicsPipeline,
-    VkBuffer& vertexBuffer,
+    const std::vector<VkBuffer>& vertexBuffers,
     const uint32_t vertexCount,
-    VkBuffer& indexBuffer,
+    VkBuffer indexBuffer,
     const uint32_t indexCount,
-    const DescriptorSetCollection& descriptorSets, 
-    VkPipelineLayout pipelineLayout){
-
+    const std::vector<std::vector<VkDescriptorSet>>& descriptorSetsPerFrame, 
+    VkPipelineLayout pipelineLayout)
+{
     mPipelineLayout = pipelineLayout;
 
-    // 参数验证加强
+    // 参数验证
     if (framebuffers.empty()) {
         throw std::runtime_error("Cannot create command buffers with empty framebuffers!");
     }
+    // 清理旧命令缓冲区
+    cleanupCommandBuffers();
 
+    // 创建新命令缓冲区
     mCommandBuffers.resize(framebuffers.size());
-
     VkCommandBufferAllocateInfo allocInfo{};
     allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
     allocInfo.commandPool = mCommandPool;
     allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-    allocInfo.commandBufferCount = (uint32_t)mCommandBuffers.size();
+    allocInfo.commandBufferCount = static_cast<uint32_t>(mCommandBuffers.size());
 
     if (vkAllocateCommandBuffers(mDevice, &allocInfo, mCommandBuffers.data()) != VK_SUCCESS) {
         throw std::runtime_error("Failed to allocate command buffers!");
     }
 
+    // 记录命令缓冲区
     for (size_t i = 0; i < mCommandBuffers.size(); ++i) {
         recordCommandBuffer(
             mCommandBuffers[i],
             framebuffers[i],
             graphicsPipeline,
-            vertexBuffer,
+            vertexBuffers,
             vertexCount,
             indexBuffer,
             indexCount,
-            descriptorSets[i] 
+            descriptorSetsPerFrame[i] // 直接传递排序后的描述符集
         );
     }
 }
@@ -106,106 +109,97 @@ void CommandSystem::recordCommandBuffer(
     VkCommandBuffer commandBuffer,
     VkFramebuffer framebuffer,
     VkPipeline graphicsPipeline,
-    VkBuffer& vertexBuffer,
+    const std::vector<VkBuffer>& vertexBuffers,
     const uint32_t vertexCount,
-    VkBuffer& indexBuffer,
+    VkBuffer indexBuffer,
     const uint32_t indexCount,
-    const DescriptorSetMap& descriptorSets // 改为接收描述符集Map
+    const std::vector<VkDescriptorSet>& descriptorSet
 ) const
 {
     VkCommandBufferBeginInfo beginInfo{};
     beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-
+    
     if (vkBeginCommandBuffer(commandBuffer, &beginInfo) != VK_SUCCESS) {
         throw std::runtime_error("Failed to begin recording command buffer!");
     }
 
+    // 设置渲染通道
     VkRenderPassBeginInfo renderPassInfo{};
     renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
     renderPassInfo.renderPass = mRenderPass;
     renderPassInfo.framebuffer = framebuffer;
-    renderPassInfo.renderArea.offset = { 0, 0 };
+    renderPassInfo.renderArea.offset = {0, 0};
     renderPassInfo.renderArea.extent = mSwapChainExtent;
 
-    VkClearValue clearColor = { 0.0f, 0.0f, 0.0f, 1.0f };
+    VkClearValue clearColor = {{{0.0f, 0.0f, 0.0f, 1.0f}}};
     renderPassInfo.clearValueCount = 1;
     renderPassInfo.pClearValues = &clearColor;
 
     vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-
+    
     // 绑定图形管线
     vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline);
 
-   
-    std::vector<uint32_t> setIndices;
-    for (const auto& pair : descriptorSets) {
-        setIndices.push_back(pair.first);
-    }
-    std::sort(setIndices.begin(), setIndices.end());
-
-    std::vector<VkDescriptorSet> orderedSets;
-    for (auto setIndex : setIndices) {
-        orderedSets.push_back(descriptorSets.at(setIndex));
-    }
-
-    if (!orderedSets.empty()) {
-        vkCmdBindDescriptorSets(
-            commandBuffer,
-            VK_PIPELINE_BIND_POINT_GRAPHICS,
-            mPipelineLayout,
-            0, 
-            static_cast<uint32_t>(orderedSets.size()),
-            orderedSets.data(),
-            0,
-            nullptr
-        );
-    }
-    
+    vkCmdBindDescriptorSets(
+        commandBuffer,
+        VK_PIPELINE_BIND_POINT_GRAPHICS,
+        mPipelineLayout,
+        0, 
+        static_cast<uint32_t>(descriptorSet.size()),
+        descriptorSet.data(),
+        0, nullptr
+    );
 
 #if DYNAMIC_STATE
-        VkViewport viewport{};
-        viewport.x = 0.0f;
-        viewport.y = USE_OPENGL_COORDINATES
-            ?static_cast<float>(mSwapChainExtent.height):0.0f; // 原点始终在左上角
-        viewport.width = static_cast<float>(mSwapChainExtent.width);
-        viewport.height = USE_OPENGL_COORDINATES
-            ? -static_cast<float>(mSwapChainExtent.height) // 高度为负，Y轴向上
-            : static_cast<float>(mSwapChainExtent.height);
-        viewport.minDepth = 0.0f;
-        viewport.maxDepth = 1.0f;
-        vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
+    VkViewport viewport{};
+    viewport.x = 0.0f;
+    viewport.y = USE_OPENGL_COORDINATES
+        ? static_cast<float>(mSwapChainExtent.height) : 0.0f; // 原点始终在左上角
+    viewport.width = static_cast<float>(mSwapChainExtent.width);
+    viewport.height = USE_OPENGL_COORDINATES
+        ? -static_cast<float>(mSwapChainExtent.height) // 高度为负，Y轴向上
+        : static_cast<float>(mSwapChainExtent.height);
+    viewport.minDepth = 0.0f;
+    viewport.maxDepth = 1.0f;
+    vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
 
-        VkRect2D scissor{};
-        scissor.offset = { 0, 0 };
-        scissor.extent = mSwapChainExtent;
-        vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
+    VkRect2D scissor{};
+    scissor.offset = { 0, 0 };
+    scissor.extent = mSwapChainExtent;
+    vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 #endif 
 
-        // 绑定顶点/索引缓冲区
-        VkBuffer vertexBuffers[] = { vertexBuffer };
-        VkDeviceSize offsets[] = { 0 };
-        vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
-        vkCmdBindIndexBuffer(commandBuffer, indexBuffer, 0, VK_INDEX_TYPE_UINT32);
 
-        // 绘制命令
-        vkCmdDrawIndexed(commandBuffer, indexCount, 1, 0, 0, 0);
+    std::vector<VkDeviceSize> offsets(vertexBuffers.size(), 0);
+    vkCmdBindVertexBuffers(
+        commandBuffer,
+        0,
+        static_cast<uint32_t>(vertexBuffers.size()),
+        vertexBuffers.data(),
+        offsets.data()
+    );
+    vkCmdBindIndexBuffer(commandBuffer, indexBuffer, 0, VK_INDEX_TYPE_UINT32);
 
-        vkCmdEndRenderPass(commandBuffer);
+    // 绘制命令
+    vkCmdDrawIndexed(commandBuffer, indexCount, 1, 0, 0, 0);
 
-        if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {
-            throw std::runtime_error("Failed to record command buffer!");
-        }
+    vkCmdEndRenderPass(commandBuffer);
+
+    if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {
+        throw std::runtime_error("Failed to record command buffer!");
+    }
 }
 
 void CommandSystem::recreateCommandBuffers(
     const std::vector<VkFramebuffer>& framebuffers,
     VkPipeline graphicsPipeline,
     VkExtent2D newExtent,
-    VkBuffer& vertexBuffer,
+    const std::vector<VkBuffer>& vertexBuffers,
     const uint32_t vertexCount,
     VkBuffer& indexBuffer,
     const uint32_t indexCount,
-    const DescriptorSetCollection& descriptorSets){
+    const std::vector<std::vector<VkDescriptorSet>>& descriptorSetsPerFrame){
+
     mSwapChainExtent = newExtent;
 
     if (!mCommandBuffers.empty()) {
@@ -220,11 +214,11 @@ void CommandSystem::recreateCommandBuffers(
     createCommandBuffers(
         framebuffers,
         graphicsPipeline,
-        vertexBuffer,
+        vertexBuffers,
         vertexCount,
         indexBuffer,
         indexCount,
-        descriptorSets,
+        descriptorSetsPerFrame,
         mPipelineLayout
     );
 }

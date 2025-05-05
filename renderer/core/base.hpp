@@ -17,6 +17,7 @@
 #include <vector>
 #include <string>
 #include <chrono>
+#include <array>
 
 #include"macros.hpp"
 

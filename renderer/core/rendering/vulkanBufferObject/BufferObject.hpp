@@ -22,9 +22,15 @@ public:
 
     virtual ~BufferObject() { cleanup(); }
 
-    // 公共接口
-    VkBuffer& getBuffer(){ return mBuffer; }
-    VkDeviceMemory& getMemory(){ return mBufferMemory; }
+    // 返回句柄的 const 引用（推荐）
+    const VkBuffer& getBuffer() const noexcept { return mBuffer; }
+    const VkDeviceMemory& getMemory() const noexcept { return mBufferMemory; }
+
+    const VulkanContext& getVkContext() const noexcept{ return mContext; }
+
+    // 可选：如果需要修改句柄的非 const 版本
+    VkBuffer& getBuffer() noexcept { return mBuffer; }
+    VkDeviceMemory& getMemory() noexcept { return mBufferMemory; }
     VkDeviceSize getSize() const noexcept { return mBufferSize; }
 
     virtual void cleanup() noexcept {
@@ -39,18 +45,31 @@ public:
         mBufferSize = 0;
     }
 
-protected:
-    // 核心缓冲区创建方法
+    void* map() {
+        if (!mMapped) {
+            VkResult result = vkMapMemory(mContext.logicalDevice, mBufferMemory, 0, mBufferSize, 0, &mMapped);
+            if (result != VK_SUCCESS) {
+                throw std::runtime_error("Failed to map buffer memory");
+            }
+        }
+        return mMapped;
+    }
+
+    void unmap() {
+        if (mMapped) {
+            vkUnmapMemory(mContext.logicalDevice, mBufferMemory);
+            mMapped = nullptr;
+        }
+    }
+
     void createBuffer(VkDeviceSize size,VkBufferUsageFlags usage,VkMemoryPropertyFlags properties);
 
-    // 带暂存缓冲区的数据上传
     template <typename DataType>
     void uploadData(const DataType* data, VkDeviceSize dataSize, VkBufferUsageFlags finalUsage);
 
-    // 内存类型查找
+
     uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) const;
 
-    // 缓冲区拷贝
     void copyBuffer(VkBuffer src, VkBuffer dst, VkDeviceSize size);
 
 protected:
@@ -58,19 +77,23 @@ protected:
     VkBuffer mBuffer = VK_NULL_HANDLE;
     VkDeviceMemory mBufferMemory = VK_NULL_HANDLE;
     VkDeviceSize mBufferSize = 0;
+    void* mMapped = nullptr;
 };
 
-// 移动语义实现
+// BufferObject 移动构造函数
 BufferObject::BufferObject(BufferObject&& other) noexcept
     : mContext(other.mContext),
     mBuffer(other.mBuffer),
     mBufferMemory(other.mBufferMemory),
-    mBufferSize(other.mBufferSize) {
+    mBufferSize(other.mBufferSize),
+    mMapped(other.mMapped) {
     other.mBuffer = VK_NULL_HANDLE;
     other.mBufferMemory = VK_NULL_HANDLE;
     other.mBufferSize = 0;
+    other.mMapped = nullptr;
 }
 
+// 移动赋值运算符
 BufferObject& BufferObject::operator=(BufferObject&& other) noexcept {
     if (this != &other) {
         cleanup();
@@ -78,9 +101,12 @@ BufferObject& BufferObject::operator=(BufferObject&& other) noexcept {
         mBuffer = other.mBuffer;
         mBufferMemory = other.mBufferMemory;
         mBufferSize = other.mBufferSize;
+        mMapped = other.mMapped;
+
         other.mBuffer = VK_NULL_HANDLE;
         other.mBufferMemory = VK_NULL_HANDLE;
         other.mBufferSize = 0;
+        other.mMapped = nullptr;
     }
     return *this;
 }

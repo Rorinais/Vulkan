@@ -3,8 +3,7 @@
 
 class CommandSystem {
 public:
-    using DescriptorSetMap = std::unordered_map<uint32_t, VkDescriptorSet>;
-    using DescriptorSetCollection = std::vector<DescriptorSetMap>;
+    using DescriptorSetCollection = std::vector<std::vector<VkDescriptorSet>>;
 
     struct FrameContext {
         VkSemaphore imageAvailable = VK_NULL_HANDLE;
@@ -19,31 +18,34 @@ public:
         VkQueue presentQueue,
         VkRenderPass renderPass,
         VkExtent2D swapChainExtent,
-        uint32_t maxFramesInFlight = 2
+        uint32_t maxFramesInFlight
     );
     ~CommandSystem();
 
     void createCommandPool(QueueFamilyIndices queueFamilyIndices);
-
     void createCommandBuffers(
         const std::vector<VkFramebuffer>& framebuffers,
         VkPipeline graphicsPipeline,
-        VkBuffer& vertexBuffer,
+        const std::vector<VkBuffer>& vertexBuffers,
         const uint32_t vertexCount,
-        VkBuffer& indexBuffer,
+        VkBuffer indexBuffer,
         const uint32_t indexCount,
-        const DescriptorSetCollection& descriptorSets, 
-        VkPipelineLayout pipelineLayout);
+        const std::vector<std::vector<VkDescriptorSet>>& descriptorSetsPerFrame,
+        VkPipelineLayout pipelineLayout
+    );
+
+
+
 
     void recreateCommandBuffers(
         const std::vector<VkFramebuffer>& framebuffers,
         VkPipeline graphicsPipeline,
         VkExtent2D newExtent,
-        VkBuffer& vertexBuffer,
+        const std::vector<VkBuffer>& vertexBuffers,
         const uint32_t vertexCount,
         VkBuffer& indexBuffer,
         const uint32_t indexCount,
-        const DescriptorSetCollection& descriptorSets);
+        const std::vector<std::vector<VkDescriptorSet>>& descriptorSetsPerFrame);
 
     void createSyncObjects(uint32_t swapChainImageCount);
 
@@ -65,11 +67,11 @@ private:
         VkCommandBuffer commandBuffer,
         VkFramebuffer framebuffer,
         VkPipeline graphicsPipeline,
-        VkBuffer& vertexBuffer,
+        const std::vector<VkBuffer>& vertexBuffers,
         const uint32_t vertexCount,
-        VkBuffer& indexBuffer,
+        VkBuffer indexBuffer,
         const uint32_t indexCount,
-        const DescriptorSetMap& descriptorSets 
+        const std::vector<VkDescriptorSet>& descriptorSet
     ) const;
 
     VkDevice mDevice = VK_NULL_HANDLE;

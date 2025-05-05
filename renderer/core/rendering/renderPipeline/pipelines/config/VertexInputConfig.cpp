@@ -1,5 +1,16 @@
 #include "VertexInputConfig.hpp"
 
+VertexInputConfig& VertexInputConfig::setBindings(const std::vector<VkVertexInputBindingDescription>& bindings) {
+    m_bindings = bindings;
+    return *this;
+}
+
+VertexInputConfig& VertexInputConfig::setAttributes(const std::vector<VkVertexInputAttributeDescription>& attributes) {
+    m_attributes = attributes;
+    return *this;
+}
+
+// 保留原有方法以兼容
 VertexInputConfig& VertexInputConfig::addBinding(uint32_t binding, uint32_t stride) {
     VkVertexInputBindingDescription desc{};
     desc.binding = binding;
@@ -9,13 +20,8 @@ VertexInputConfig& VertexInputConfig::addBinding(uint32_t binding, uint32_t stri
     return *this;
 }
 
-VertexInputConfig& VertexInputConfig::addAttribute(uint32_t binding, Config attr) {
-    VkVertexInputAttributeDescription desc{};
-    desc.binding = binding;
-    desc.location = attr.location;
-    desc.format = attr.format;
-    desc.offset = attr.offset;
-    m_attributes.push_back(desc);
+VertexInputConfig& VertexInputConfig::addAttribute(uint32_t binding, const VkVertexInputAttributeDescription& attr) {
+    m_attributes.push_back(attr);
     return *this;
 }
 

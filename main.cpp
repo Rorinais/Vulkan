@@ -17,59 +17,60 @@ const uint32_t WIDTH = 800;
 const uint32_t HEIGHT = 600;
 const int MAX_FRAMES_IN_FLIGHT = 2;
 
-//const std::vector<Vertex> vertices = {
-//	{{-0.5f , -0.5f,0.0f } , {0.0f , 0.0f , 0.0f }} ,
-//	{{0.5f , -0.5f,0.0f } , {1.0f , 0.0f , 0.0f }} ,
-//	{{0.5f , 0.5f,0.0f } , {1.0f , 1.0f , 0.0f }} ,
-//	{{-0.5f , 0.5f,0.0f } , {0.0f , 1.0f , 0.0f }}
-//};
-//const std::vector<uint32_t> indices = {
-//	0, 1, 2,
-//	2, 3, 0
-//};
+/*const std::vector<Vertex> vertices = {
+	{{-0.5f, -0.5f,  0.5f},	{ 1.0f, 0.0f, 0.0f }},
+	{{ 0.5f, -0.5f,  0.5f},	{ 0.0f, 1.0f, 0.0f }},
+	{{ 0.5f,  0.5f,  0.5f},	{ 0.0f, 0.0f, 1.0f }},
+	{{-0.5f,  0.5f,  0.5f},	{ 1.0f, 1.0f, 0.0f }},
+											 	
+	{{-0.5f, -0.5f, -0.5f},	{ 1.0f, 0.0f, 1.0f }},
+	{{ 0.5f, -0.5f, -0.5f},	{ 0.0f, 1.0f, 1.0f }},
+	{{ 0.5f,  0.5f, -0.5f},	{ 1.0f, 1.0f, 1.0f }},
+	{{-0.5f,  0.5f, -0.5f},	{ 0.5f, 0.5f, 0.5f }},
+};	*/											 
+const std::vector<glm::vec3> positions = {
+	{-0.5f, -0.5f,  0.5f}, 
+	{ 0.5f, -0.5f,  0.5f}, 
+	{ 0.5f,  0.5f,  0.5f}, 
+	{-0.5f,  0.5f,  0.5f}, 
 
-const std::vector<Vertex> vertices = {
-	// Front face  
-	{{-0.5f, -0.5f,  0.5f}, {1.0f, 0.0f, 0.0f}},
-	{{ 0.5f, -0.5f,  0.5f}, {0.0f, 1.0f, 0.0f}},
-	{{ 0.5f,  0.5f,  0.5f}, {0.0f, 0.0f, 1.0f}},
-	{{-0.5f,  0.5f,  0.5f}, {1.0f, 1.0f, 0.0f}},
-	// Back face  
-	{{-0.5f, -0.5f, -0.5f}, {1.0f, 0.0f, 1.0f}},
-	{{ 0.5f, -0.5f, -0.5f}, {0.0f, 1.0f, 1.0f}},
-	{{ 0.5f,  0.5f, -0.5f}, {1.0f, 1.0f, 1.0f}},
-	{{-0.5f,  0.5f, -0.5f}, {0.5f, 0.5f, 0.5f}},
+	{-0.5f, -0.5f, -0.5f}, 
+	{ 0.5f, -0.5f, -0.5f}, 
+	{ 0.5f,  0.5f, -0.5f}, 
+	{-0.5f,  0.5f, -0.5f}, 
+};
+const std::vector<glm::vec3> colors = {
+	{ 1.0f, 0.0f, 0.0f },
+	{ 0.0f, 1.0f, 0.0f },
+	{ 0.0f, 0.0f, 1.0f },
+	{ 1.0f, 1.0f, 0.0f },
+
+	{ 1.0f, 0.0f, 1.0f },
+	{ 0.0f, 1.0f, 1.0f },
+	{ 1.0f, 1.0f, 1.0f },
+	{ 0.5f, 0.5f, 0.5f },
 };
 
 const std::vector<uint32_t> indices = {
-	// Front face  
-	0, 1, 2, 2, 3, 0,
-	// Back face  
-	4, 5, 6, 6, 7, 4,
-	// Left face  
-	4, 0, 3, 3, 7, 4,
-	// Right face  
-	1, 5, 6, 6, 2, 1,
-	// Top face  
-	3, 2, 6, 6, 7, 3,
-	// Bottom face  
-	4, 5, 1, 1, 0, 4,
+	0, 1, 2, 2, 3, 0,	// Front face  
+	4, 5, 6, 6, 7, 4,	// Back face  
+	4, 0, 3, 3, 7, 4,	// Left face  
+	1, 5, 6, 6, 2, 1,	// Right face  
+	3, 2, 6, 6, 7, 3,	// Top face  
+	4, 5, 1, 1, 0, 4,	// Bottom face  
 };
-
 
 struct UniformBuffers {
-	glm::mat4 model;
-	glm::mat4 view;
-	glm::mat4 proj;
+	alignas(16) glm::mat4 model;
+
+	alignas(16) glm::mat4 view;
+
+	alignas(16) glm::mat4 proj;
 };
 
-struct fraUBO {
-	alignas(16) glm::vec4 cols;
-};
-
-class HelloTriangleApplication {
+class Application {
 public:
-	HelloTriangleApplication() = default;
+	Application() = default;
 	void run() {
 		initWindow();
 		initVulkan();
@@ -77,27 +78,12 @@ public:
 		cleanUp();
 	}
 private:
-	void initWindow() {
-		WindowManager::Config config{
-			.width = 800,
-			.height = 600,
-			.title = "Vulkan Demo",
-			.resizable = true,
-			.monitorIndex = 0,
-			.fullScreen = false,
-			.highDPI = false
-		};
-		mWindow = new WindowManager(config);
-		mWindow->setKeyCallback([this](int key, int action) {
-			if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
-				glfwSetWindowShouldClose(mWindow->getHandle(), GLFW_TRUE);
-			}
-			});
+	void initWindow();
+	void mainLoop();
+	void cleanUp();
+	void createGraphicsPipeline();
+	void recreateSwapChainResources();
 
-		mWindow->setResizeCallback([this](int, int) {
-			mFramebufferResized.store(true);
-			});
-	}
 	void initVulkan() {
 		InstanceManager::Config instanceConfig{
 			.appName = "Vulkan Demo",
@@ -138,40 +124,57 @@ private:
 		);
 		mCommandSystem->createCommandPool(queueIndices);
 
-		VulkanContext vkContext{
+		vkContext={
 			.physicalDevice = mPhysicalDeviceSelector->getPhysicalDevice(),
 			.logicalDevice = mLogicalDevice->getDevice(),
 			.commandPool = mCommandSystem->getCommandPool(),
 			.graphicsQueue = mLogicalDevice->getQueues().graphicsQueue,
 			.swapChainExtent = mSwapChainManager->getSwapChainExtent()
 		};
+
+		//mVertexBuffer = new VertexBuffer(vkContext);
+		//std::vector<glm::vec3> position;
+		//std::vector<glm::vec3> color;
+		//position.reserve(vertices.size());
+		//color.reserve(vertices.size());
+		//for (const auto& vertex : vertices) {
+		//	position.push_back(vertex.position);
+		//	color.push_back(vertex.color);
+		//}
+
+		//mVertexBuffer->beginBinding(0); 
+		//mVertexBuffer->addAttribute(0, VK_FORMAT_R32G32B32_SFLOAT, position);
+		//mVertexBuffer->addAttribute(1, VK_FORMAT_R32G32B32_SFLOAT, color);
+		//mVertexBuffer->finishBinding();
+
 		mVertexBuffer = new VertexBuffer(vkContext);
-		mVertexBuffer->loadData(vertices);
+		mVertexBuffer->beginBinding(0); 
+		mVertexBuffer->addAttribute(0, VK_FORMAT_R32G32B32_SFLOAT, positions);
+		mVertexBuffer->finishBinding();
 
 		mIndexBuffer = new IndexBuffer(vkContext);
 		mIndexBuffer->loadData(indices);
 
-		mDescriptorManager = new MultiDescriptorManager(vkContext, mSwapChainManager->getSwapChainImageCount());
+		mDescriptorManager = new UniformBufferManager(vkContext);
+		mDescriptorManager->addUniformBinding<UniformBuffers>(0, 0, VK_SHADER_STAGE_VERTEX_BIT);
 
-		// 添加多个Set和Binding
-		mDescriptorManager->addUBOBinding<UniformBuffers>(0, 0, VK_SHADER_STAGE_VERTEX_BIT); // Set 0 Binding 0
-		mDescriptorManager->addUBOBinding<fraUBO>(1, 0, VK_SHADER_STAGE_FRAGMENT_BIT);      // Set 1 Binding 0
 
-		// 创建描述符资源
-		mDescriptorManager->createDescriptorLayouts();
-		mDescriptorManager->createDescriptorPool();
-		mDescriptorManager->createDescriptorSets();
+		mDescriptorManager->createDescriptorResources(mSwapChainManager->getSwapChainImageCount());
 
-		// 获取所有Set的布局用于管线创建
-		const auto& allLayouts = mDescriptorManager->getAllLayouts();
+		const auto descriptorLayouts = mDescriptorManager->getDescriptorSetLayouts();
+		const auto setNumbers = mDescriptorManager->getDescriptorSetNumbers();
 
-		// 创建管线布局
+		// 确保布局顺序正确
+		std::vector<VkDescriptorSetLayout> orderedLayouts;
+		for (uint32_t set : setNumbers) {
+			orderedLayouts.push_back(mDescriptorManager->getDescriptorSetLayouts()[set]);
+		}
+
 		VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
 		pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-		pipelineLayoutInfo.setLayoutCount = static_cast<uint32_t>(allLayouts.size());
-		pipelineLayoutInfo.pSetLayouts = allLayouts.data();
-		if (vkCreatePipelineLayout(mLogicalDevice->getDevice(), &pipelineLayoutInfo,
-			nullptr, &pipelineLayout) != VK_SUCCESS) {
+		pipelineLayoutInfo.setLayoutCount = static_cast<uint32_t>(orderedLayouts.size());
+		pipelineLayoutInfo.pSetLayouts = orderedLayouts.data();
+		if (vkCreatePipelineLayout(mLogicalDevice->getDevice(), &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS) {
 			throw std::runtime_error("Failed to create pipeline layout!");
 		}
 
@@ -179,172 +182,31 @@ private:
 
 		mSwapChainManager->createFramebuffers(mGraphicsPipelineFactory->getRenderPass());
 
+		std::vector<std::vector<VkDescriptorSet>> descriptorSetss;
+		const auto& allSets = mDescriptorManager->getDescriptorSetss();
+		for (size_t i = 0; i < mSwapChainManager->getSwapChainImageCount(); ++i) {
+			std::vector<VkDescriptorSet> frameSets;
+			for (const auto& set : allSets) {
+				frameSets.push_back(set[i]);
+			}
+			descriptorSetss.push_back(frameSets);
+		}
+
 		mCommandSystem->createCommandBuffers(
 			mSwapChainManager->getSwapChainFramebuffers(),
 			mGraphicsPipelineFactory->getGraphicsPipeline(),
-			mVertexBuffer->getBuffer(),
+			mVertexBuffer->getBufferHandles(),
 			mVertexBuffer->getVertexCount(),
 			mIndexBuffer->getBuffer(),
 			mIndexBuffer->getIndexCount(),
-			mDescriptorManager->getDescriptorSet(),
+			descriptorSetss,
 			pipelineLayout
 		);
 		mCommandSystem->updateSyncObjects(
 			mSwapChainManager->getSwapChainImageCount()
 		);
 	}
-	void mainLoop() {
-		while (!glfwWindowShouldClose(mWindow->getHandle())) {
-			glfwPollEvents();
 
-			static int lastWidth = 0, lastHeight = 0;
-			int newWidth, newHeight;
-			glfwGetFramebufferSize(mWindow->getHandle(), &newWidth, &newHeight);
-
-			if (newWidth != lastWidth || newHeight != lastHeight) {
-				lastWidth = newWidth;
-				lastHeight = newHeight;
-				mFramebufferResized.store(true);
-			}
-
-			if (mFramebufferResized.load()) {
-				recreateSwapChainResources();
-				mFramebufferResized.store(false);
-			}
-
-			try {
-				drawFrame();
-			}
-			catch (const std::runtime_error& e) {
-				std::cerr << "Drawing failed: " << e.what() << std::endl;
-				vkDeviceWaitIdle(mLogicalDevice->getDevice());
-				recreateSwapChainResources();
-			}
-		}
-
-		vkDeviceWaitIdle(mLogicalDevice->getDevice());
-	}
-	void cleanUp() {
-		if (mDescriptorManager) {
-			mDescriptorManager->cleanup();
-			delete mDescriptorManager;
-			mDescriptorManager = nullptr;
-		}
-		if (mIndexBuffer) {
-			mIndexBuffer->cleanup();
-			delete mIndexBuffer;
-			mIndexBuffer = nullptr;
-		}
-		if (mVertexBuffer) {
-			mVertexBuffer->cleanup();
-			delete mVertexBuffer;
-			mVertexBuffer = nullptr;
-		}
-
-		if (mCommandSystem) {
-			mCommandSystem->cleanup();
-			delete mCommandSystem;
-			mCommandSystem = nullptr;
-		}
-
-		if (mSwapChainManager) {
-			mSwapChainManager->cleanupSwapChain();
-			delete mSwapChainManager;
-			mSwapChainManager = nullptr;
-		}
-
-		if (mGraphicsPipelineFactory) {
-			mGraphicsPipelineFactory->cleanup();
-			delete mGraphicsPipelineFactory;
-			mGraphicsPipelineFactory = nullptr;
-		}
-
-		if (mLogicalDevice) {
-			delete mLogicalDevice;
-			mLogicalDevice = nullptr;
-		}
-
-		if (mPhysicalDeviceSelector) {
-			vkDestroySurfaceKHR(mInstance->getHandle(),
-				mPhysicalDeviceSelector->getSurface(),
-				nullptr);
-			delete mPhysicalDeviceSelector;
-			mPhysicalDeviceSelector = nullptr;
-		}
-
-		if (mDebug) {
-			delete mDebug;
-			mDebug = nullptr;
-		}
-
-		if (mInstance) {
-			delete mInstance;
-			mInstance = nullptr;
-		}
-
-		if (mWindow) {
-			delete mWindow;
-			mWindow = nullptr;
-		}
-	}
-	void recreateSwapChainResources() {
-		vkDeviceWaitIdle(mLogicalDevice->getDevice());
-
-		if (mCommandSystem) {
-			mCommandSystem->cleanupCommandBuffers();
-		}
-		if (mSwapChainManager) {
-			mSwapChainManager->cleanupSwapChain();
-		}
-
-		try {
-			mSwapChainManager->createSwapChain();
-			mSwapChainManager->createImageViews();
-			mSwapChainManager->createFramebuffers(mGraphicsPipelineFactory->getRenderPass());
-
-			mCommandSystem->recreateCommandBuffers(
-				mSwapChainManager->getSwapChainFramebuffers(),
-				mGraphicsPipelineFactory->getGraphicsPipeline(),
-				mSwapChainManager->getSwapChainExtent(),
-				mVertexBuffer->getBuffer(),
-				mVertexBuffer->getVertexCount(),
-				mIndexBuffer->getBuffer(),
-				mIndexBuffer->getIndexCount(),
-				mDescriptorManager->getDescriptorSet()
-			);
-			mCommandSystem->updateSyncObjects(mSwapChainManager->getSwapChainImageCount());
-		}
-		catch (const std::exception& e) {
-			std::cerr << "swapChain recreation failed: " << e.what() << std::endl;
-			return;
-		}
-
-		// 4. 重置帧索引
-		mCurrentFrame = 0;
-		mFramebufferResized.store(false);
-	}
-	void createGraphicsPipeline() {
-
-		ShaderManager shaderManager(mLogicalDevice->getDevice());
-		VkShaderModule vertModule = shaderManager.loadFromGLSL("resources/shaders/shader.vert", VK_SHADER_STAGE_VERTEX_BIT, "VertexShader");
-		VkShaderModule fragModule = shaderManager.loadFromGLSL("resources/shaders/shader.frag", VK_SHADER_STAGE_FRAGMENT_BIT, "FragmentShader");
-
-		PipelineFactory::PipelineConfig config;
-		config.vertexInput.addBinding(0, sizeof(Vertex))
-			.addAttribute(0, { 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, position) })
-			.addAttribute(0, { 1, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, color) });
-
-#if USE_OPENGL_COORDINATES
-		config.rasterization.setCullMode(VK_CULL_MODE_BACK_BIT).setFrontFace(VK_FRONT_FACE_COUNTER_CLOCKWISE);
-#endif 
-		config.viewport.createViewport(mSwapChainManager->getSwapChainExtent());
-		config.colorBlend.addAttachment({ .blendEnable = VK_FALSE });
-
-		config.pipelineLayout = pipelineLayout;
-
-		mGraphicsPipelineFactory->configure(config);
-		mGraphicsPipelineFactory->createGraphicsPipeline(vertModule, fragModule);
-	}
 	void drawFrame() {
 		uint32_t imageIndex;
 		bool needRecreate = false;
@@ -375,7 +237,7 @@ private:
 		ubo.view = glm::lookAt(
 			glm::vec3(2.0f, 2.0f, 2.0f),
 			glm::vec3(0.0f, 0.0f, 0.0f),
-			glm::vec3(0.0f, 0.0f, 1.0f));
+			glm::vec3(0.0f, 0.0f, 1.5f));
 
 		float aspect = mSwapChainManager->getSwapChainExtent().width /
 			(float)mSwapChainManager->getSwapChainExtent().height;
@@ -386,17 +248,8 @@ private:
 			10.0f);
 		//ubo.proj[1][1] *= -1; 
 
-		fraUBO fbo{};
-		fbo.cols = glm::vec4(0.0f, 1.f, 0.f, 1.0f);
+		mDescriptorManager->updateUniformData<UniformBuffers>(0, 0, imageIndex, ubo);
 
-		try {
-			mDescriptorManager->updateUBOData<UniformBuffers>(0,0, imageIndex, ubo);
-			mDescriptorManager->updateUBOData<fraUBO>(1,0, imageIndex, fbo);
-		}
-		catch (const std::exception& e) {
-			std::cerr << "Failed to update uniform buffer: " << e.what() << std::endl;
-			return;
-		}
 
 		// 3. 提交绘制命令
 		mCommandSystem->submitFrame(imageIndex);
@@ -412,22 +265,7 @@ private:
 			recreateSwapChainResources();
 		}
 	}
-	static std::vector<char> readFile(const std::string& filename) {
-		std::ifstream file(filename, std::ios::ate | std::ios::binary);
 
-		if (!file.is_open()) {
-			throw std::runtime_error("failed to open file!");
-		}
-		size_t fileSize = (size_t)file.tellg();
-		std::vector<char> buffer(fileSize);
-
-		file.seekg(0);
-		file.read(buffer.data(), fileSize);
-
-		file.close();
-
-		return buffer;
-	}
 private:
 	WindowManager* mWindow = nullptr;
 	InstanceManager* mInstance = nullptr;
@@ -437,22 +275,25 @@ private:
 	SwapChainManager* mSwapChainManager = nullptr;
 	PipelineFactory* mGraphicsPipelineFactory = nullptr;
 	CommandSystem* mCommandSystem = nullptr;
+
 	VertexBuffer* mVertexBuffer = nullptr;
 	IndexBuffer* mIndexBuffer = nullptr;
-	MultiDescriptorManager* mDescriptorManager = nullptr;
+	UniformBufferManager* mDescriptorManager = nullptr;
+
+	VulkanContext vkContext;
 
 	VkPipelineLayout pipelineLayout = VK_NULL_HANDLE;
 
 	uint32_t mCurrentFrame = 0;
 	std::atomic<bool> mFramebufferResized{ false };
-};
 
+};
 int main() {
 #ifdef _WIN32
 	_putenv_s("VK_LAYER_PATH", "layers");
 #endif
 
-	HelloTriangleApplication app;
+	Application app;
 
 	try {
 		app.run();
@@ -462,4 +303,204 @@ int main() {
 		return EXIT_FAILURE;
 	}
 	return EXIT_SUCCESS;
+}
+
+void Application::initWindow() {
+	WindowManager::Config config{
+		.width = 800,
+		.height = 600,
+		.title = "Vulkan Demo",
+		.resizable = true,
+		.monitorIndex = 0,
+		.fullScreen = false,
+		.highDPI = false
+	};
+	mWindow = new WindowManager(config);
+	mWindow->setKeyCallback([this](int key, int action) {
+		if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
+			glfwSetWindowShouldClose(mWindow->getHandle(), GLFW_TRUE);
+		}
+		});
+
+	mWindow->setResizeCallback([this](int, int) {
+		mFramebufferResized.store(true);
+		});
+}
+
+void Application::mainLoop() {
+	while (!glfwWindowShouldClose(mWindow->getHandle())) {
+		glfwPollEvents();
+
+		static int lastWidth = 0, lastHeight = 0;
+		int newWidth, newHeight;
+		glfwGetFramebufferSize(mWindow->getHandle(), &newWidth, &newHeight);
+
+		if (newWidth != lastWidth || newHeight != lastHeight) {
+			lastWidth = newWidth;
+			lastHeight = newHeight;
+			mFramebufferResized.store(true);
+		}
+
+		if (mFramebufferResized.load()) {
+			recreateSwapChainResources();
+			mFramebufferResized.store(false);
+		}
+
+		try {
+			drawFrame();
+		}
+		catch (const std::runtime_error& e) {
+			std::cerr << "Drawing failed: " << e.what() << std::endl;
+			vkDeviceWaitIdle(mLogicalDevice->getDevice());
+			recreateSwapChainResources();
+		}
+	}
+
+	vkDeviceWaitIdle(mLogicalDevice->getDevice());
+}
+
+void Application::cleanUp() {
+	vkDeviceWaitIdle(mLogicalDevice->getDevice());
+
+	if (mIndexBuffer) {
+		mIndexBuffer->cleanup();
+		delete mIndexBuffer;
+		mIndexBuffer = nullptr;
+	}
+
+	if (mVertexBuffer) {
+		mVertexBuffer->cleanup();
+		delete mVertexBuffer;
+		mVertexBuffer = nullptr;
+	}
+
+	if (mCommandSystem) {
+		mCommandSystem->cleanup();
+		delete mCommandSystem;
+		mCommandSystem = nullptr;
+	}
+
+	if (mSwapChainManager) {
+		mSwapChainManager->cleanupSwapChain();
+		delete mSwapChainManager;
+		mSwapChainManager = nullptr;
+	}
+
+	if (mGraphicsPipelineFactory) {
+		mGraphicsPipelineFactory->cleanup();
+		delete mGraphicsPipelineFactory;
+		mGraphicsPipelineFactory = nullptr;
+	}
+
+	if (mDescriptorManager) {
+		mDescriptorManager->cleanupResources();
+		delete mDescriptorManager;
+		mDescriptorManager = nullptr;
+	}
+
+	if (mLogicalDevice) {
+		delete mLogicalDevice;
+		mLogicalDevice = nullptr;
+	}
+
+	if (mPhysicalDeviceSelector) {
+		vkDestroySurfaceKHR(mInstance->getHandle(),
+			mPhysicalDeviceSelector->getSurface(),
+			nullptr);
+		delete mPhysicalDeviceSelector;
+		mPhysicalDeviceSelector = nullptr;
+	}
+
+	if (mDebug) {
+		delete mDebug;
+		mDebug = nullptr;
+	}
+
+	if (mInstance) {
+		delete mInstance;
+		mInstance = nullptr;
+	}
+
+	if (mWindow) {
+		delete mWindow;
+		mWindow = nullptr;
+	}
+}
+
+void Application::createGraphicsPipeline() {
+	ShaderManager shaderManager(mLogicalDevice->getDevice());
+	VkShaderModule vertModule = shaderManager.loadFromGLSL("resources/shaders/shader.vert", VK_SHADER_STAGE_VERTEX_BIT, "VertexShader");
+	VkShaderModule fragModule = shaderManager.loadFromGLSL("resources/shaders/shader.frag", VK_SHADER_STAGE_FRAGMENT_BIT, "FragmentShader");
+
+	PipelineFactory::PipelineConfig config;
+
+	auto bindings = mVertexBuffer->getBindingDescriptions();
+	auto attributes = mVertexBuffer->getAttributeDescriptions();
+
+	config.vertexInput = VertexInputConfig();
+	for (const auto& binding : bindings) {
+		config.vertexInput.addBinding(binding.binding, binding.stride);
+	}
+	for (const auto& attr : attributes) {
+		config.vertexInput.addAttribute(attr.binding, attr);
+	}
+
+#if USE_OPENGL_COORDINATES
+	config.rasterization.setCullMode(VK_CULL_MODE_BACK_BIT).setFrontFace(VK_FRONT_FACE_COUNTER_CLOCKWISE);
+#endif 
+	config.viewport.createViewport(mSwapChainManager->getSwapChainExtent());
+	config.colorBlend.addAttachment({ .blendEnable = VK_FALSE });
+
+	config.pipelineLayout = pipelineLayout;
+
+	mGraphicsPipelineFactory->configure(config);
+	mGraphicsPipelineFactory->createGraphicsPipeline(vertModule, fragModule);
+}
+
+void Application::recreateSwapChainResources() {
+	vkDeviceWaitIdle(mLogicalDevice->getDevice());
+
+	if (mCommandSystem) {
+		mCommandSystem->cleanupCommandBuffers();
+	}
+	if (mSwapChainManager) {
+		mSwapChainManager->cleanupSwapChain();
+	}
+
+	mDescriptorManager->recreateResources(mSwapChainManager->getSwapChainImageCount());
+
+	try {
+		mSwapChainManager->createSwapChain();
+		mSwapChainManager->createImageViews();
+		mSwapChainManager->createFramebuffers(mGraphicsPipelineFactory->getRenderPass());
+
+		std::vector<std::vector<VkDescriptorSet>> descriptorSetss;
+		const auto& allSets = mDescriptorManager->getDescriptorSetss();
+		for (size_t i = 0; i < mSwapChainManager->getSwapChainImageCount(); ++i) {
+			std::vector<VkDescriptorSet> frameSets;
+			for (const auto& set : allSets) {
+				frameSets.push_back(set[i]);
+			}
+			descriptorSetss.push_back(frameSets);
+		}
+
+		mCommandSystem->recreateCommandBuffers(
+			mSwapChainManager->getSwapChainFramebuffers(),
+			mGraphicsPipelineFactory->getGraphicsPipeline(),
+			mSwapChainManager->getSwapChainExtent(),
+			mVertexBuffer->getBufferHandles(),
+			mVertexBuffer->getVertexCount(),
+			mIndexBuffer->getBuffer(),
+			mIndexBuffer->getIndexCount(),
+			descriptorSetss
+		);
+		mCommandSystem->updateSyncObjects(mSwapChainManager->getSwapChainImageCount());
+	}
+	catch (const std::exception& e) {
+		std::cerr << "swapChain recreation failed: " << e.what() << std::endl;
+		return;
+	}
+
+	mCurrentFrame = 0;
+	mFramebufferResized.store(false);
 }

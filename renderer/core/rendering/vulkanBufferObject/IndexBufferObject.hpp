@@ -12,10 +12,6 @@ public:
         }
         const VkDeviceSize dataSize = sizeof(uint32_t) * indices.size();
         uploadData(indices.data(), dataSize, VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
-
-        // 调试输出
-        std::cout << "Index buffer handle: " << getBuffer()
-            << ", size: " << getSize() << " bytes" << std::endl;
     }
 
     uint32_t getIndexCount() const noexcept {

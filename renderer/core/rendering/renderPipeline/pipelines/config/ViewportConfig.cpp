@@ -41,18 +41,18 @@ ViewportConfig& ViewportConfig::addScissor(const VkRect2D& scissor) {
 
 const VkPipelineViewportStateCreateInfo& ViewportConfig::getCreateInfo() const {
     // 调试输出
-    std::cout << "=== Viewport Configuration ===" << "\n"
-        << "Viewport Count: " << m_config.viewports.size() << "\n"
-        << "Viewport[0]:\n"
-        << "  x: " << m_config.viewports[0].x << "\n"
-        << "  y: " << m_config.viewports[0].y << "\n"
-        << "  width: " << m_config.viewports[0].width << "\n"
-        << "  height: " << m_config.viewports[0].height << "\n"
-        << "Scissor[0]:\n"
-        << "  offset: (" << m_config.scissors[0].offset.x
-        << ", " << m_config.scissors[0].offset.y << ")\n"
-        << "  extent: " << m_config.scissors[0].extent.width
-        << "x" << m_config.scissors[0].extent.height << "\n";
+    //std::cout << "=== Viewport Configuration ===" << "\n"
+    //    << "Viewport Count: " << m_config.viewports.size() << "\n"
+    //    << "Viewport[0]:\n"
+    //    << "  x: " << m_config.viewports[0].x << "\n"
+    //    << "  y: " << m_config.viewports[0].y << "\n"
+    //    << "  width: " << m_config.viewports[0].width << "\n"
+    //    << "  height: " << m_config.viewports[0].height << "\n"
+    //    << "Scissor[0]:\n"
+    //    << "  offset: (" << m_config.scissors[0].offset.x
+    //    << ", " << m_config.scissors[0].offset.y << ")\n"
+    //    << "  extent: " << m_config.scissors[0].extent.width
+    //    << "x" << m_config.scissors[0].extent.height << "\n";
 
     // 返回创建信息
     static VkPipelineViewportStateCreateInfo info{};

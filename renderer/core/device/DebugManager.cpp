@@ -42,12 +42,14 @@ DebugManager::~DebugManager()
 
 void DebugManager::populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo) {
     createInfo = {};
-    createInfo.sType =
-        VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
+    createInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
     createInfo.messageSeverity =
         VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT |
+        VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT | 
         VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT |
         VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
+    //createInfo.messageSeverity =
+    //    VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;  // 只关注错误信息
     createInfo.messageType =
         VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT |
         VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT |
@@ -62,6 +64,7 @@ VKAPI_ATTR VkBool32 VKAPI_CALL DebugManager::debugCallback(
     const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
     void* pUserData)
 {
+    // 原有的前缀设置
     const char* prefix = "";
     if (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT) {
         prefix = "[VULKAN ERROR]";
@@ -76,7 +79,13 @@ VKAPI_ATTR VkBool32 VKAPI_CALL DebugManager::debugCallback(
         prefix = "[VULKAN VERBOSE]";
     }
 
-    std::cerr << prefix << " " << pCallbackData->pMessage << "\n";
+
+    std::cerr << prefix
+        << " [Type: " << messageType << "]"  // 可添加类型描述
+        << " ID: " << pCallbackData->pMessageIdName
+        << " - " << pCallbackData->pMessage
+        << "\n";
+
 
     return VK_FALSE;
 }

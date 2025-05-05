@@ -78,13 +78,13 @@ bool InstanceManager::checkValidationSupport() const{
 	std::vector<VkLayerProperties> availableLayers(layerCount);
 	vkEnumerateInstanceLayerProperties(&layerCount, availableLayers.data());
 
-	std::cerr << "===== Available Vulkan Layers =====" << std::endl;
-	for (const auto& layer : availableLayers) {
-		std::cerr << "Layer: " << layer.layerName
-			<< "\n\tSpec Version: " << layer.specVersion
-			<< "\n\tImpl Version: " << layer.implementationVersion
-			<< "\n\tDescription: " << layer.description << std::endl;
-	}
+	//std::cerr << "===== Available Vulkan Layers =====" << std::endl;
+	//for (const auto& layer : availableLayers) {
+	//	std::cerr << "Layer: " << layer.layerName
+	//		<< "\n\tSpec Version: " << layer.specVersion
+	//		<< "\n\tImpl Version: " << layer.implementationVersion
+	//		<< "\n\tDescription: " << layer.description << std::endl;
+	//}
 
 	bool allLayersFound = true;
 	for (const char* layerName : validationLayers) {
