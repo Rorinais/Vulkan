@@ -7,6 +7,7 @@
 #include "config/RasterizationConfig.hpp"
 #include "config/MultisampleConfig.hpp"
 #include "config/ColorBlendConfig.hpp"
+#include "config/DepthStencilConfig.hpp"
 #include "../../ShaderManager.hpp"
 #include "../passes/RenderPassBuilder.hpp"
 #include <memory>
@@ -21,6 +22,7 @@ public:
         MultisampleConfig multisample;
         ColorBlendConfig colorBlend;
 		VkPipelineLayout pipelineLayout = VK_NULL_HANDLE;
+        VkPipelineDepthStencilStateCreateInfo depthStencil;
     };
 
     PipelineFactory(VkDevice device);
@@ -32,7 +34,7 @@ public:
         VkShaderModule vertShaderPath,
         VkShaderModule fragShaderPath);
 
-    void createRenderPass(RenderPassBuilder::RenderPassConfig& config);
+    void createRenderPass(RenderPassBuilder::RenderPassConfig& config, VkFormat& depthFormat);
 
     void cleanup();
 

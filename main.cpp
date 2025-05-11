@@ -12,52 +12,94 @@
 #include "./renderer/core/rendering/vulkanBufferObject/VertexBufferObject.hpp"
 #include "./renderer/core/rendering/vulkanBufferObject/IndexBufferObject.hpp"
 #include "./renderer/core/rendering/vulkanBufferObject/UniformBufferObject.hpp"
+#include "./renderer/resources/mesh/mesh.hpp"
+
 
 const uint32_t WIDTH = 800;
 const uint32_t HEIGHT = 600;
 const int MAX_FRAMES_IN_FLIGHT = 2;
 
-/*const std::vector<Vertex> vertices = {
-	{{-0.5f, -0.5f,  0.5f},	{ 1.0f, 0.0f, 0.0f }},
-	{{ 0.5f, -0.5f,  0.5f},	{ 0.0f, 1.0f, 0.0f }},
-	{{ 0.5f,  0.5f,  0.5f},	{ 0.0f, 0.0f, 1.0f }},
-	{{-0.5f,  0.5f,  0.5f},	{ 1.0f, 1.0f, 0.0f }},
-											 	
-	{{-0.5f, -0.5f, -0.5f},	{ 1.0f, 0.0f, 1.0f }},
-	{{ 0.5f, -0.5f, -0.5f},	{ 0.0f, 1.0f, 1.0f }},
-	{{ 0.5f,  0.5f, -0.5f},	{ 1.0f, 1.0f, 1.0f }},
-	{{-0.5f,  0.5f, -0.5f},	{ 0.5f, 0.5f, 0.5f }},
-};	*/											 
 const std::vector<glm::vec3> positions = {
-	{-0.5f, -0.5f,  0.5f}, 
-	{ 0.5f, -0.5f,  0.5f}, 
-	{ 0.5f,  0.5f,  0.5f}, 
-	{-0.5f,  0.5f,  0.5f}, 
+	// Front face (0-3)
+	{-0.5f, -0.5f,  0.5f},
+	{ 0.5f, -0.5f,  0.5f},
+	{ 0.5f,  0.5f,  0.5f},
+	{-0.5f,  0.5f,  0.5f},
 
-	{-0.5f, -0.5f, -0.5f}, 
-	{ 0.5f, -0.5f, -0.5f}, 
-	{ 0.5f,  0.5f, -0.5f}, 
-	{-0.5f,  0.5f, -0.5f}, 
+	// Back face (4-7)
+	{ 0.5f, -0.5f, -0.5f},
+	{-0.5f, -0.5f, -0.5f},
+	{-0.5f,  0.5f, -0.5f},
+	{ 0.5f,  0.5f, -0.5f},
+
+	// Left face (8-11)
+	{-0.5f, -0.5f, -0.5f},
+	{-0.5f, -0.5f,  0.5f},
+	{-0.5f,  0.5f,  0.5f},
+	{-0.5f,  0.5f, -0.5f},
+
+	// Right face (12-15)
+	{ 0.5f, -0.5f,  0.5f},
+	{ 0.5f, -0.5f, -0.5f},
+	{ 0.5f,  0.5f, -0.5f},
+	{ 0.5f,  0.5f,  0.5f},
+
+	// Top face (16-19)
+	{-0.5f,  0.5f,  0.5f},
+	{ 0.5f,  0.5f,  0.5f},
+	{ 0.5f,  0.5f, -0.5f},
+	{-0.5f,  0.5f, -0.5f},
+
+	// Bottom face (20-23)
+	{-0.5f, -0.5f, -0.5f},
+	{ 0.5f, -0.5f, -0.5f},
+	{ 0.5f, -0.5f,  0.5f},
+	{-0.5f, -0.5f,  0.5f},
 };
-const std::vector<glm::vec3> colors = {
-	{ 1.0f, 0.0f, 0.0f },
-	{ 0.0f, 1.0f, 0.0f },
-	{ 0.0f, 0.0f, 1.0f },
-	{ 1.0f, 1.0f, 0.0f },
 
-	{ 1.0f, 0.0f, 1.0f },
-	{ 0.0f, 1.0f, 1.0f },
-	{ 1.0f, 1.0f, 1.0f },
-	{ 0.5f, 0.5f, 0.5f },
+const std::vector<glm::vec3> colors = {
+	// Front face
+	{1.0f, 0.0f, 0.0f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f, 0.0f},
+	// Back face
+	{0.5f, 0.5f, 0.5f}, {1.0f, 0.0f, 1.0f}, {0.0f, 1.0f, 1.0f}, {1.0f, 1.0f, 1.0f},
+	// Left face
+	{1.0f, 0.0f, 1.0f}, {1.0f, 0.0f, 0.0f}, {1.0f, 1.0f, 0.0f}, {0.5f, 0.5f, 0.5f},
+	// Right face
+	{0.0f, 1.0f, 0.0f}, {0.0f, 1.0f, 1.0f}, {1.0f, 1.0f, 1.0f}, {0.0f, 0.0f, 1.0f},
+	// Top face
+	{1.0f, 1.0f, 0.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f, 1.0f}, {0.5f, 0.5f, 0.5f},
+	// Bottom face
+	{1.0f, 0.0f, 1.0f}, {0.0f, 1.0f, 1.0f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f, 0.0f},
+};
+
+const std::vector<glm::vec2> texCoords = {
+	// Front face
+	{0.0f, 0.0f}, {1.0f, 0.0f}, {1.0f, 1.0f}, {0.0f, 1.0f},
+	// Back face
+	{0.0f, 0.0f}, {1.0f, 0.0f}, {1.0f, 1.0f}, {0.0f, 1.0f},
+	// Left face
+	{0.0f, 0.0f}, {1.0f, 0.0f}, {1.0f, 1.0f}, {0.0f, 1.0f},
+	// Right face
+	{0.0f, 0.0f}, {1.0f, 0.0f}, {1.0f, 1.0f}, {0.0f, 1.0f},
+	// Top face
+	{0.0f, 0.0f}, {1.0f, 0.0f}, {1.0f, 1.0f}, {0.0f, 1.0f},
+	// Bottom face
+	{0.0f, 0.0f}, {1.0f, 0.0f}, {1.0f, 1.0f}, {0.0f, 1.0f},
 };
 
 const std::vector<uint32_t> indices = {
-	0, 1, 2, 2, 3, 0,	// Front face  
-	4, 5, 6, 6, 7, 4,	// Back face  
-	4, 0, 3, 3, 7, 4,	// Left face  
-	1, 5, 6, 6, 2, 1,	// Right face  
-	3, 2, 6, 6, 7, 3,	// Top face  
-	4, 5, 1, 1, 0, 4,	// Bottom face  
+	// Front
+	0, 1, 2, 2, 3, 0,
+	// Back
+	4, 5, 6, 6, 7, 4,
+	// Left
+	8, 9, 10, 10, 11, 8,
+	// Right
+	12, 13, 14, 14, 15, 12,
+	// Top
+	16, 17, 18, 18, 19, 16,
+	// Bottom
+	20, 21, 22, 22, 23, 20,
 };
 
 struct UniformBuffers {
@@ -112,7 +154,11 @@ private:
 		.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
 		.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR
 		};
-		mGraphicsPipelineFactory->createRenderPass(config);
+
+		VkFormat depthFormat = Texture::findSupportedDepthFormat(mPhysicalDeviceSelector->getPhysicalDevice());
+
+		mGraphicsPipelineFactory->createRenderPass(config,depthFormat);
+
 
 		mCommandSystem = new CommandSystem(
 			mLogicalDevice->getDevice(),
@@ -146,25 +192,34 @@ private:
 		//mVertexBuffer->addAttribute(0, VK_FORMAT_R32G32B32_SFLOAT, position);
 		//mVertexBuffer->addAttribute(1, VK_FORMAT_R32G32B32_SFLOAT, color);
 		//mVertexBuffer->finishBinding();
+		Mesh mesh;
+		mesh.LoadMesh("D:\\LearnOpenGL\\g.fbx");
 
 		mVertexBuffer = new VertexBuffer(vkContext);
-		mVertexBuffer->beginBinding(0); 
-		mVertexBuffer->addAttribute(0, VK_FORMAT_R32G32B32_SFLOAT, positions);
+		mVertexBuffer->beginBinding(0);
+		mVertexBuffer->addAttribute(0, VK_FORMAT_R32G32B32_SFLOAT, mesh.positions);
 		mVertexBuffer->finishBinding();
 
+		mVertexBuffer->beginBinding(1);
+		mVertexBuffer->addAttribute(1, VK_FORMAT_R32G32B32_SFLOAT, mesh.normals);
+		mVertexBuffer->finishBinding();
+		
+		mVertexBuffer->beginBinding(2);
+		mVertexBuffer->addAttribute(2, VK_FORMAT_R32G32_SFLOAT, mesh.texCoords);
+		mVertexBuffer->finishBinding();
+
+
 		mIndexBuffer = new IndexBuffer(vkContext);
-		mIndexBuffer->loadData(indices);
+		mIndexBuffer->loadData(mesh.indices);
 
 		mDescriptorManager = new UniformBufferManager(vkContext);
 		mDescriptorManager->addUniformBinding<UniformBuffers>(0, 0, VK_SHADER_STAGE_VERTEX_BIT);
-
-
+		mDescriptorManager->addTextureBinding(0, 1,VK_SHADER_STAGE_FRAGMENT_BIT,"C:\\Users\\41384\\Desktop\\luguan.jpg");
 		mDescriptorManager->createDescriptorResources(mSwapChainManager->getSwapChainImageCount());
 
 		const auto descriptorLayouts = mDescriptorManager->getDescriptorSetLayouts();
 		const auto setNumbers = mDescriptorManager->getDescriptorSetNumbers();
 
-		// 确保布局顺序正确
 		std::vector<VkDescriptorSetLayout> orderedLayouts;
 		for (uint32_t set : setNumbers) {
 			orderedLayouts.push_back(mDescriptorManager->getDescriptorSetLayouts()[set]);
@@ -180,7 +235,7 @@ private:
 
 		createGraphicsPipeline();
 
-		mSwapChainManager->createFramebuffers(mGraphicsPipelineFactory->getRenderPass());
+		mSwapChainManager->createFramebuffers(mGraphicsPipelineFactory->getRenderPass(),vkContext);
 
 		std::vector<std::vector<VkDescriptorSet>> descriptorSetss;
 		const auto& allSets = mDescriptorManager->getDescriptorSetss();
@@ -236,8 +291,8 @@ private:
 
 		ubo.view = glm::lookAt(
 			glm::vec3(2.0f, 2.0f, 2.0f),
-			glm::vec3(0.0f, 0.0f, 0.0f),
-			glm::vec3(0.0f, 0.0f, 1.5f));
+			glm::vec3(0.0f, 0.0f, 1.0f),
+			glm::vec3(0.0f, 0.0f, 2.0f));
 
 		float aspect = mSwapChainManager->getSwapChainExtent().width /
 			(float)mSwapChainManager->getSwapChainExtent().height;
@@ -249,7 +304,6 @@ private:
 		//ubo.proj[1][1] *= -1; 
 
 		mDescriptorManager->updateUniformData<UniformBuffers>(0, 0, imageIndex, ubo);
-
 
 		// 3. 提交绘制命令
 		mCommandSystem->submitFrame(imageIndex);
@@ -265,7 +319,6 @@ private:
 			recreateSwapChainResources();
 		}
 	}
-
 private:
 	WindowManager* mWindow = nullptr;
 	InstanceManager* mInstance = nullptr;
@@ -281,7 +334,6 @@ private:
 	UniformBufferManager* mDescriptorManager = nullptr;
 
 	VulkanContext vkContext;
-
 	VkPipelineLayout pipelineLayout = VK_NULL_HANDLE;
 
 	uint32_t mCurrentFrame = 0;
@@ -446,7 +498,7 @@ void Application::createGraphicsPipeline() {
 	}
 
 #if USE_OPENGL_COORDINATES
-	config.rasterization.setCullMode(VK_CULL_MODE_BACK_BIT).setFrontFace(VK_FRONT_FACE_COUNTER_CLOCKWISE);
+	config.rasterization.setCullMode(VK_CULL_MODE_NONE).setFrontFace(VK_FRONT_FACE_COUNTER_CLOCKWISE);
 #endif 
 	config.viewport.createViewport(mSwapChainManager->getSwapChainExtent());
 	config.colorBlend.addAttachment({ .blendEnable = VK_FALSE });
@@ -467,12 +519,10 @@ void Application::recreateSwapChainResources() {
 		mSwapChainManager->cleanupSwapChain();
 	}
 
-	mDescriptorManager->recreateResources(mSwapChainManager->getSwapChainImageCount());
-
 	try {
 		mSwapChainManager->createSwapChain();
 		mSwapChainManager->createImageViews();
-		mSwapChainManager->createFramebuffers(mGraphicsPipelineFactory->getRenderPass());
+		mSwapChainManager->createFramebuffers(mGraphicsPipelineFactory->getRenderPass(),vkContext);
 
 		std::vector<std::vector<VkDescriptorSet>> descriptorSetss;
 		const auto& allSets = mDescriptorManager->getDescriptorSetss();
