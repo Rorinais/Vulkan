@@ -1,5 +1,6 @@
 #pragma once
 #include"../base.hpp"
+#include"../../core/rendering/vulkanBufferObject/Texture.hpp"
 
 class SwapChainManager {
 public:
@@ -16,12 +17,14 @@ public:
 	std::vector<VkFramebuffer>& getSwapChainFramebuffers() { return mSwapChainFramebuffers; }
 	VkFormat& getSwapChainImageFormat() { return mSwapChainImageFormat; }
 	VkExtent2D& getSwapChainExtent() { return mSwapChainExtent; }
+	Texture* getDepthTexture() { return mDepthTexture.get(); }
 
 	static SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice device, VkSurfaceKHR surface);
 
+	void createDepthResources(VulkanContext& context);
 	void createSwapChain();
 	void createImageViews();
-	void createFramebuffers(VkRenderPass renderPass);
+	void createFramebuffers(VkRenderPass renderPass, VulkanContext& context);
 	void cleanupSwapChain();
 	size_t getSwapChainImageCount();
 
@@ -42,4 +45,6 @@ private:
 	std::vector<VkFramebuffer> mSwapChainFramebuffers{};
 	VkFormat mSwapChainImageFormat = VK_FORMAT_UNDEFINED;
 	VkExtent2D mSwapChainExtent = { 0, 0 };
+
+	std::unique_ptr<Texture> mDepthTexture;
 };

@@ -184,19 +184,22 @@ void SwapChainManager::createImageViews() {
 	}
 }
 
-void SwapChainManager::createFramebuffers(VkRenderPass renderPass) {
+void SwapChainManager::createFramebuffers(VkRenderPass renderPass, VulkanContext& context) {
+	createDepthResources(context); 
+
 	mSwapChainFramebuffers.resize(mSwapChainImageViews.size());
 
 	for (size_t i = 0; i < mSwapChainImageViews.size(); i++) {
-		VkImageView attachments[] = {
-			mSwapChainImageViews[i]
+		std::array<VkImageView, 2> attachments = {
+			mSwapChainImageViews[i],
+			mDepthTexture->imageView() 
 		};
 
 		VkFramebufferCreateInfo framebufferInfo{};
 		framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
 		framebufferInfo.renderPass = renderPass;
-		framebufferInfo.attachmentCount = 1;
-		framebufferInfo.pAttachments = attachments;
+		framebufferInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
+		framebufferInfo.pAttachments = attachments.data();
 		framebufferInfo.width = mSwapChainExtent.width;
 		framebufferInfo.height = mSwapChainExtent.height;
 		framebufferInfo.layers = 1;
@@ -225,4 +228,13 @@ void SwapChainManager::cleanupSwapChain() {
 	}
 }
 
+void SwapChainManager::createDepthResources(VulkanContext& context) {
+
+	VkExtent2D extent = mSwapChainExtent;
+	mDepthTexture = std::make_unique<Texture>(
+		context,
+		Texture::Type::Depth,
+		extent
+	);
+}
 

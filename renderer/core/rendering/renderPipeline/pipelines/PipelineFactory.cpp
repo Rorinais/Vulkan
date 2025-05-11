@@ -7,12 +7,39 @@ PipelineFactory::~PipelineFactory() {
 
 void PipelineFactory::configure(const PipelineConfig& config) {
     mConfig = config;
+
+    // 深度模板状态配置
+    mConfig.depthStencil = {}; // 重要：清空原有数据
+    mConfig.depthStencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+    mConfig.depthStencil.pNext = nullptr; // 明确设置pNext为nullptr
+    mConfig.depthStencil.flags = 0;       // 显式设置flags为0
+
+    // 深度测试配置
+    mConfig.depthStencil.depthTestEnable = VK_TRUE;
+    mConfig.depthStencil.depthWriteEnable = VK_TRUE;
+    mConfig.depthStencil.depthCompareOp = VK_COMPARE_OP_LESS;
+    mConfig.depthStencil.depthBoundsTestEnable = VK_FALSE;
+    mConfig.depthStencil.minDepthBounds = 0.0f;
+    mConfig.depthStencil.maxDepthBounds = 1.0f;
+
+    // 模板测试配置（即使未启用也需初始化）
+    mConfig.depthStencil.stencilTestEnable = VK_FALSE;
+    // 初始化front模板操作
+    mConfig.depthStencil.front.failOp = VK_STENCIL_OP_KEEP;
+    mConfig.depthStencil.front.passOp = VK_STENCIL_OP_KEEP;
+    mConfig.depthStencil.front.depthFailOp = VK_STENCIL_OP_KEEP;
+    mConfig.depthStencil.front.compareOp = VK_COMPARE_OP_ALWAYS;
+    mConfig.depthStencil.front.compareMask = 0;
+    mConfig.depthStencil.front.writeMask = 0;
+    mConfig.depthStencil.front.reference = 0;
+    // 复制front配置到back
+    mConfig.depthStencil.back = mConfig.depthStencil.front;
 }
 
-void PipelineFactory::createRenderPass(RenderPassBuilder::RenderPassConfig&config) {
+void PipelineFactory::createRenderPass(RenderPassBuilder::RenderPassConfig&config, VkFormat& depthFormat) {
     if (mRenderPass == VK_NULL_HANDLE) { 
         RenderPassBuilder passbuilder(mDevice);
-        mRenderPass = passbuilder.configureColorAttachment(config).build();
+        mRenderPass = passbuilder.configureColorAttachment(config).configureDepthAttachment(depthFormat).build();
     }
 }
 
@@ -35,6 +62,7 @@ void PipelineFactory::createGraphicsPipeline(VkShaderModule vertModule,VkShaderM
     createInfo.pRasterizationState = &mConfig.rasterization.getCreateInfo();
     createInfo.pMultisampleState = &mConfig.multisample.getCreateInfo();
     createInfo.pColorBlendState = &mConfig.colorBlend.getCreateInfo();
+    createInfo.pDepthStencilState = &mConfig.depthStencil;
     createInfo.layout = mConfig.pipelineLayout;
     createInfo.renderPass = mRenderPass;
     createInfo.subpass = 0;

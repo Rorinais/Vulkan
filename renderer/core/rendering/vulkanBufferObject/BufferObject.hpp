@@ -2,13 +2,7 @@
 #include "../../base.hpp"
 #include <stdexcept>
 
-struct VulkanContext {
-    VkPhysicalDevice physicalDevice;
-    VkDevice logicalDevice;
-    VkCommandPool commandPool;
-    VkQueue graphicsQueue;
-    VkExtent2D swapChainExtent;
-};
+
 
 class BufferObject {
 public:
