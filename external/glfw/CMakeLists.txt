@@ -1,0 +1,9 @@
+get_filename_component(GLFW_LIB_DIR "${CMAKE_CURRENT_SOURCE_DIR}" ABSOLUTE)
+
+add_library(glfw SHARED IMPORTED GLOBAL)  
+
+set_target_properties(glfw PROPERTIES
+    IMPORTED_IMPLIB "${GLFW_LIB_DIR}/glfw3_mt.lib"
+    IMPORTED_LOCATION "${GLFW_LIB_DIR}/glfw3.dll"
+    INTERFACE_INCLUDE_DIRECTORIES "${GLFW_LIB_DIR}"
+)
