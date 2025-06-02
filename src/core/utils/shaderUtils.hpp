@@ -1,6 +1,6 @@
 #pragma once
 #include "../../base.hpp"
-#include "../../rendering/vulkan/logicalDevice.hpp"
+#include "../../renderer/core/context/logicalDevice.hpp"
 #include <shaderc/shaderc.hpp>
 
 class ShaderUtils {
@@ -23,6 +23,13 @@ public:
     // 直接加载SPIR-V文件
     VkShaderModule loadFromSPV(
         const std::string& filename,
+        const std::string& debugName = ""
+    );
+
+    VkShaderModule loadFromGLSLString(
+        const std::string& sourceCode,
+        VkShaderStageFlagBits stage,
+        const std::vector<std::pair<std::string, std::string>>& macros = {},
         const std::string& debugName = ""
     );
 
@@ -68,6 +75,14 @@ public:
 
     void addGLSLStage(
         const std::string& filename,
+        VkShaderStageFlagBits stage,
+        const char* entryPoint,
+        const std::vector<std::pair<std::string, std::string>>& macros = {},
+        const std::string& debugName = ""
+    );
+
+    void addGLSLStringStage(
+        const std::string& sourceCode,
         VkShaderStageFlagBits stage,
         const char* entryPoint,
         const std::vector<std::pair<std::string, std::string>>& macros = {},

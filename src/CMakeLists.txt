@@ -17,8 +17,10 @@ target_link_libraries(BaseInterface INTERFACE
 add_subdirectory(core/application)
 add_subdirectory(core/platform)
 add_subdirectory(core/utils)
-add_subdirectory(rendering/vulkan)
-add_subdirectory(rendering/core)
+add_subdirectory(renderer/core)
+add_subdirectory(renderer/passes)
+add_subdirectory(renderer/pipeline)
+add_subdirectory(renderer/resources)
 
 add_executable(${PROJECT_NAME} ${MAIN_SOURCE})
 
@@ -27,7 +29,7 @@ PRIVATE
     BaseInterface
     window
     application
-    VulkanDevice
+    resources
 )
 
 function(copy_target_resources TARGET_NAME)
@@ -125,7 +127,7 @@ if(WIN32)
     )
     add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "${CMAKE_SOURCE_DIR}/external/vulkan/lib/shaderc/shaderc_shared.dll"
+            "${CMAKE_SOURCE_DIR}/external/vulkan/lib/shaderc/shaderc_sharedd.dll"
             "$<TARGET_FILE_DIR:${PROJECT_NAME}>"
         COMMENT "Copying vulkan-1.dll to output directory"
         VERBATIM

@@ -34,6 +34,30 @@ VkShaderModule ShaderUtils::loadFromSPV(
     return createShaderModule(spirv, debugName);
 }
 
+// 在shaderUtils.cpp中实现
+
+VkShaderModule ShaderUtils::loadFromGLSLString(
+    const std::string& sourceCode,
+    VkShaderStageFlagBits stage,
+    const std::vector<std::pair<std::string, std::string>>& macros,
+    const std::string& debugName
+) {
+    shaderc_shader_kind kind;
+    switch (stage) {
+    case VK_SHADER_STAGE_VERTEX_BIT:   kind = shaderc_vertex_shader; break;
+    case VK_SHADER_STAGE_FRAGMENT_BIT: kind = shaderc_fragment_shader; break;
+    case VK_SHADER_STAGE_COMPUTE_BIT:  kind = shaderc_compute_shader; break;
+    case VK_SHADER_STAGE_GEOMETRY_BIT: kind = shaderc_geometry_shader; break;
+    case VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT: kind = shaderc_tess_control_shader; break;
+    case VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT: kind = shaderc_tess_evaluation_shader; break;
+    default:
+        throw std::runtime_error("Unsupported shader stage");
+    }
+
+    auto spirv = compileGLSL(sourceCode, kind, macros, debugName);
+    return createShaderModule(spirv, debugName);
+}
+
 std::vector<uint32_t> ShaderUtils::compileGLSL(
     const std::string& source,
     shaderc_shader_kind kind,
@@ -160,6 +184,20 @@ void ShaderStages::addSPVStage(
     const std::string& debugName
 ) {
     VkShaderModule module = mShaderUtils->loadFromSPV(filename, debugName);
+    mShaderModules.push_back(module);
+    mStages.push_back(createStageInfo(module, stage, entryPoint));
+}
+
+void ShaderStages::addGLSLStringStage(
+    const std::string& sourceCode,
+    VkShaderStageFlagBits stage,
+    const char* entryPoint,
+    const std::vector<std::pair<std::string, std::string>>& macros,
+    const std::string& debugName
+) {
+    VkShaderModule module = mShaderUtils->loadFromGLSLString(
+        sourceCode, stage, macros, debugName
+    );
     mShaderModules.push_back(module);
     mStages.push_back(createStageInfo(module, stage, entryPoint));
 }
