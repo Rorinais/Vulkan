@@ -1,4 +1,4 @@
-#include "Viewport.hpp"
+#include "viewport.hpp"
 Viewport& Viewport::addViewport(const VkViewport& viewport) {
     mViewports.viewports.push_back(viewport);
     return *this;

@@ -1,4 +1,4 @@
-#include "VertexInput.hpp"
+#include "vertexInput.hpp"
 
 VertexInput& VertexInput::setBindings(const std::vector<VkVertexInputBindingDescription>& bindings) {
     mBindings = bindings;

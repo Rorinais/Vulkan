@@ -1,4 +1,4 @@
-#include "InputAssembly.hpp"
+#include "inputAssembly.hpp"
 
 InputAssembly& InputAssembly::setTopology(VkPrimitiveTopology topology) {
     mConfig.topology = topology;

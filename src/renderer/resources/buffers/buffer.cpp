@@ -1,5 +1,9 @@
 #include"Buffer.hpp"
-// Buffer.cpp
+
+Buffer::Ptr Buffer::create(const LogicalDevice::Ptr& logicalDevice, const CommandPool::Ptr& commandPool) {
+    return std::make_shared<Buffer>(logicalDevice, commandPool);
+}
+
 void Buffer::createBuffer(
     VkDeviceSize size,
     VkBufferUsageFlags usage,
@@ -7,24 +11,9 @@ void Buffer::createBuffer(
 ) {
     cleanup();
 
-    mBufferSize = size; // 先保存原始大小
-
-    // 仅当是Uniform Buffer时才进行对齐计算
-    if (usage & VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT) {
-        VkPhysicalDeviceProperties physicalDeviceProperties;
-        vkGetPhysicalDeviceProperties(mLogicalDevice->getPhysicalDevice()->getHandle(), &physicalDeviceProperties);
-        VkDeviceSize minUboAlignment = physicalDeviceProperties.limits.minUniformBufferOffsetAlignment;
-
-        // 计算对齐后的大小
-        mAlignedSize = (size + minUboAlignment - 1) & ~(minUboAlignment - 1);
-    }
-    else {
-        mAlignedSize = size;
-    }
-
     VkBufferCreateInfo bufferInfo{};
     bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-    bufferInfo.size = mAlignedSize; // 使用对齐后的大小
+    bufferInfo.size = size; 
     bufferInfo.usage = usage;
     bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
@@ -94,4 +83,65 @@ void Buffer::copyBuffer(VkBuffer src, VkBuffer dst, VkDeviceSize size) {
     vkQueueWaitIdle(mLogicalDevice->getQueueHandles().graphicsQueue);
 
     vkFreeCommandBuffers(mLogicalDevice->getHandle(), mCommandPool->getHandle(), 1, &cmdBuffer);
+}
+void Buffer::uploadData(const void* data, VkDeviceSize size, VkBufferUsageFlags usage) {
+    // 创建暂存缓冲区
+    Buffer stagingBuffer(mLogicalDevice, mCommandPool);
+    stagingBuffer.createBuffer(
+        size,
+        VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+        VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
+    );
+
+    // 映射并拷贝数据
+    void* stagingMapped = stagingBuffer.map();
+    memcpy(stagingMapped, data, size);
+    stagingBuffer.unmap();
+
+    // 创建目标缓冲区
+    createBuffer(
+        size,
+        VK_BUFFER_USAGE_TRANSFER_DST_BIT | usage,
+        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
+    );
+
+    // 执行拷贝命令
+    copyBuffer(stagingBuffer.getBuffer(), mBuffer, size);
+}
+
+void Buffer::cleanup() noexcept {
+    if (mBuffer != VK_NULL_HANDLE) {
+        vkDestroyBuffer(mLogicalDevice->getHandle(), mBuffer, nullptr);
+        mBuffer = VK_NULL_HANDLE;
+    }
+    if (mBufferMemory != VK_NULL_HANDLE) {
+        vkFreeMemory(mLogicalDevice->getHandle(), mBufferMemory, nullptr);
+        mBufferMemory = VK_NULL_HANDLE;
+    }
+    mBufferSize = 0;
+}
+
+void* Buffer::map() {
+    if (!mMapped) {
+        VkResult result = vkMapMemory(
+            mLogicalDevice->getHandle(),
+            mBufferMemory,
+            0,
+            mBufferSize,
+            0,
+            &mMapped
+        );
+        if (result != VK_SUCCESS) {
+            throw std::runtime_error("Failed to map buffer memory");
+        }
+    }
+    return mMapped;
+}
+
+void Buffer::unmap() {
+    if (mMapped) {
+        vkUnmapMemory(mLogicalDevice->getHandle(), mBufferMemory);
+        mMapped = nullptr;
+    }
 }

@@ -27,7 +27,11 @@ add_subdirectory(external/spdlog)
  
 add_subdirectory(src) 
 
+#DEBUG 
+#cmake  -DCMAKE_BUILD_TYPE=Debug ..
 
+#Relese
+#cmake  -DCMAKE_BUILD_TYPE=Release ..
 
 
 

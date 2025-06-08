@@ -1,20 +1,18 @@
 #pragma once
 #include "Buffer.hpp"
-#include <iostream>
+#include <vector>
 
 class IndexBuffer : public Buffer {
 public:
-    using Buffer::Buffer;
+    using Ptr = std::shared_ptr<IndexBuffer>;
+    static Ptr create(const LogicalDevice::Ptr& logicalDevice, const CommandPool::Ptr& commandPool);
 
-    void loadData(const std::vector<uint32_t>& indices) {
-        if (indices.empty()) {
-            throw std::runtime_error("Index data is empty!");
-        }
-        const VkDeviceSize dataSize = sizeof(uint32_t) * indices.size();
-        uploadData(indices.data(), dataSize, VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
-    }
+    IndexBuffer(const LogicalDevice::Ptr& logicalDevice,const CommandPool::Ptr& commandPool);
 
-    uint32_t getIndexCount() const noexcept {
-        return static_cast<uint32_t>(getSize() / sizeof(uint32_t));
-    }
+    void loadData(const std::vector<uint32_t>& indices);
+
+    uint32_t getIndexCount() const noexcept { return mIndexCount; }
+
+private:
+    uint32_t mIndexCount;
 };

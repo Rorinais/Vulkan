@@ -21,6 +21,7 @@ add_subdirectory(renderer/core)
 add_subdirectory(renderer/passes)
 add_subdirectory(renderer/pipeline)
 add_subdirectory(renderer/resources)
+add_subdirectory(renderer/ecs)
 
 add_executable(${PROJECT_NAME} ${MAIN_SOURCE})
 
@@ -30,6 +31,7 @@ PRIVATE
     window
     application
     resources
+    ecs
 )
 
 function(copy_target_resources TARGET_NAME)
@@ -56,23 +58,24 @@ function(copy_target_resources TARGET_NAME)
         endif()
 
         set(SHADER_TARGETS)
-
         foreach(shader_file IN LISTS SHADER_FILES)
-            file(RELATIVE_PATH relative_path "${ARG_SHADERS}" "${shader_file}")
-            set(final_dest "${ASSETS_DEST}/shaders/${relative_path}")
-            get_filename_component(final_dir "${final_dest}" DIRECTORY)
-            
-            set(flag_file "${CMAKE_CURRENT_BINARY_DIR}/${TARGET_NAME}_shaders/${relative_path}.flag")
+        file(RELATIVE_PATH relative_path "${ARG_SHADERS}" "${shader_file}")
+        set(final_dest "${ASSETS_DEST}/shaders/${relative_path}")
+        get_filename_component(final_dir "${final_dest}" DIRECTORY)
+        
+        set(flag_file "${CMAKE_CURRENT_BINARY_DIR}/${TARGET_NAME}_shaders/${relative_path}.flag")
+        get_filename_component(flag_file_dir "${flag_file}" DIRECTORY)  # 新增：获取flag文件目录
 
-            add_custom_command(
-                OUTPUT ${flag_file}
-                COMMAND ${CMAKE_COMMAND} -E make_directory "${final_dir}"
-                COMMAND ${CMAKE_COMMAND} -E copy "${shader_file}" "${final_dest}"
-                COMMAND ${CMAKE_COMMAND} -E touch ${flag_file}
-                DEPENDS "${shader_file}"
-                COMMENT "强制更新 Shader: ${relative_path}"
-            )
-            list(APPEND SHADER_TARGETS ${flag_file})
+        add_custom_command(
+            OUTPUT ${flag_file}
+            COMMAND ${CMAKE_COMMAND} -E make_directory "${final_dir}"
+            COMMAND ${CMAKE_COMMAND} -E make_directory "${flag_file_dir}"  # 新增：创建flag目录
+            COMMAND ${CMAKE_COMMAND} -E copy "${shader_file}" "${final_dest}"
+            COMMAND ${CMAKE_COMMAND} -E touch ${flag_file}
+            DEPENDS "${shader_file}"
+            COMMENT "强制更新 Shader: ${relative_path}"
+        )
+        list(APPEND SHADER_TARGETS ${flag_file})
         endforeach()
 
         add_custom_target(${TARGET_NAME}_CopyShaders ALL
@@ -111,13 +114,26 @@ copy_target_resources(${PROJECT_NAME}
 )
 
 if(WIN32)
-    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "${CMAKE_SOURCE_DIR}/external/glfw/glfw3.dll"
-            "$<TARGET_FILE_DIR:${PROJECT_NAME}>"
-        COMMENT "Copying vulkan-1.dll to output directory"
-        VERBATIM
-    )
+
+    if(MSVC)
+        add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                "${CMAKE_SOURCE_DIR}/external/glfw/glfw3.dll"
+                "$<TARGET_FILE_DIR:${PROJECT_NAME}>"
+            COMMENT "Copying glfw3.dll to output directory"
+            VERBATIM
+        )
+    elseif(MINGW)
+        add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                "${CMAKE_SOURCE_DIR}/external/glfw/libglfw3.a"
+                "$<TARGET_FILE_DIR:${PROJECT_NAME}>"
+            COMMENT "Copying libglfw3.a to output directory"
+            VERBATIM
+        )
+
+    endif()
+
     add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
             "${CMAKE_SOURCE_DIR}/external/vulkan/lib/vulkan-1.dll"
@@ -129,7 +145,7 @@ if(WIN32)
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
             "${CMAKE_SOURCE_DIR}/external/vulkan/lib/shaderc/shaderc_sharedd.dll"
             "$<TARGET_FILE_DIR:${PROJECT_NAME}>"
-        COMMENT "Copying vulkan-1.dll to output directory"
+        COMMENT "Copying shaderc_sharedd.dll to output directory"
         VERBATIM
     )
 
@@ -137,10 +153,12 @@ if(WIN32)
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
             "${CMAKE_SOURCE_DIR}/external/assimp/assimp/lib/assimp-vc143-mt.dll"
             "$<TARGET_FILE_DIR:${PROJECT_NAME}>"
-        COMMENT "Copying vulkan-1.dll to output directory"
+        COMMENT "Copying assimp-vc143-mt.dll to output directory"
         VERBATIM
     )
 endif()
+
+
 
 # Vulkan验证层配置
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
@@ -152,22 +170,24 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     set(VK_LAYER_SRC "${CMAKE_SOURCE_DIR}/external/vulkan/lib/layers")
     set(VK_LAYER_DEST "$<TARGET_FILE_DIR:${PROJECT_NAME}>")
     
-    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E make_directory "${VK_LAYER_DEST}/layers"
-        COMMAND ${CMAKE_COMMAND} -E copy
-            "${VK_LAYER_SRC}/VkLayer_khronos_validation.dll"
-            "${VK_LAYER_DEST}/"
-        COMMAND ${CMAKE_COMMAND} -E copy
-            "${VK_LAYER_SRC}/VkLayer_khronos_validation.json"
-            "${VK_LAYER_DEST}/layers"
-        COMMENT "Copying Vulkan validation layers"
-    )
-
     if(WIN32)
+        add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E make_directory "${VK_LAYER_DEST}/layers"        
+            COMMAND ${CMAKE_COMMAND} -E copy
+                "${VK_LAYER_SRC}/VkLayer_khronos_validation.dll"
+                "${VK_LAYER_DEST}/"
+            COMMAND ${CMAKE_COMMAND} -E copy
+                "${VK_LAYER_SRC}/VkLayer_khronos_validation.json"
+                "${VK_LAYER_DEST}/layers"
+            COMMENT "Copying Vulkan validation layers"
+        )
+
         set_target_properties(${PROJECT_NAME} PROPERTIES
             VS_DEBUGGER_ENVIRONMENT 
             "VK_LAYER_PATH=${VK_LAYER_DEST};%VK_LAYER_PATH%"
         )
+        
     endif()
+    
 endif()
 

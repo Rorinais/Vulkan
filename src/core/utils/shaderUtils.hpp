@@ -60,16 +60,16 @@ private:
     shaderc::Compiler mCompiler; 
 };
 
-class ShaderStages {
+class ShaderProgram {
 public:
-    using Ptr = std::shared_ptr<ShaderStages>;
+    using Ptr = std::shared_ptr<ShaderProgram>;
     static Ptr create(const LogicalDevice::Ptr& logicalDevice) {
-        return std::make_shared<ShaderStages>(logicalDevice);
+        return std::make_shared<ShaderProgram>(logicalDevice);
     }
 
-    ShaderStages(const LogicalDevice::Ptr& logicalDevice);
+    ShaderProgram(const LogicalDevice::Ptr& logicalDevice);
 
-    ~ShaderStages();
+    ~ShaderProgram();
 
     const std::vector<VkPipelineShaderStageCreateInfo>& getStages() const { return mStages;}
 

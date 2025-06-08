@@ -40,7 +40,7 @@ void Application::initWindow() {
         }});
 
     mWindow->setResizeCallback([this](int, int) {
-        mFramebufferResized.store(true);
+        mFramebufferResized = true;
         });
 }
 
@@ -65,7 +65,7 @@ void Application::initVulkan() {
     mSwapChain->createFramebuffers(mRenderPass->getHandle(),mCommandPool);
 
     createGeometry();
-    mVertexBuffer = new VertexBuffer(mLogicalDevice, mCommandPool);
+    mVertexBuffer = VertexArrayBuffer::create(mLogicalDevice, mCommandPool);
     mVertexBuffer->beginBinding(0);
     mVertexBuffer->addAttribute(0, VK_FORMAT_R32G32B32_SFLOAT, positions);
     mVertexBuffer->finishBinding();
@@ -79,7 +79,7 @@ void Application::initVulkan() {
     //mVertexBuffer->finishBinding();
 
 
-    mIndexBuffer = new IndexBuffer(mLogicalDevice, mCommandPool);
+    mIndexBuffer =IndexBuffer::create(mLogicalDevice, mCommandPool);
     mIndexBuffer->loadData(indices);
 
     //mDescriptorManager = new UniformBufferManager(mLogicalDevice,mCommandPool);
@@ -91,6 +91,7 @@ void Application::initVulkan() {
     mDescriptorManager->addUniformBinding<UniformBuffers>(0, 0, VK_SHADER_STAGE_VERTEX_BIT);
     mDescriptorManager->createDescriptorResources(mSwapChain->getSwapChainFramebuffers().size());
 
+    mBaseShader = new BaseShader();
     createPipeline();
     createCommandBuffers();
     createSyncObjects();
@@ -157,10 +158,9 @@ void Application::cleanup() {
 
     delete mDescriptorManager;
     mDescriptorManager = nullptr;
-    delete mVertexBuffer;
-    mVertexBuffer = nullptr;
-    delete mIndexBuffer;
     mIndexBuffer = nullptr;
+    delete mBaseShader;
+    mBaseShader = nullptr;
 
     for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i) {
         mImageAvailableSemaphores[i].reset();
@@ -245,7 +245,7 @@ void Application::createPipeline() {
     mPipeline->setPipelineLayout(PipelineLayout::create(mLogicalDevice, descriptorLayouts));
     //mPipeline->setPipelineLayout(PipelineLayout::create(mLogicalDevice, {}));
 
-    mPipeline->setShaderStage(BaseShader().buildDefaultShaderStages(mLogicalDevice));
+    mPipeline->setShaderStage(mBaseShader->buildDefaultShaderStages(mLogicalDevice));
 
     mPipeline->createGraphicsPipeline();
 }
@@ -302,6 +302,11 @@ void Application::recreateSwapChain() {
 void Application::cleanupSwapChain() {
     mCommandBuffers.clear();
     mPipeline.reset();
+
+    if (mDescriptorManager) {
+        mDescriptorManager->cleanupResources();
+    }
+
     mSwapChain->cleanupFramebuffers();
     mRenderPass.reset();
     mSwapChain.reset();

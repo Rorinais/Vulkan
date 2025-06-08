@@ -17,8 +17,8 @@
 #include "../../renderer/resources/textures/Texture.hpp"
 #include "../../renderer/resources/buffers/Buffer.hpp"
 #include "../../renderer/resources/buffers/IndexBuffer.hpp"
-#include "../../renderer/resources/buffers/VertexBuffer.hpp"
-#include "../../renderer/pipeline/shaders/baseShader.hpp"
+#include "../../renderer/resources/buffers/VertexArrayBuffer.hpp"
+#include "../../renderer/resources/shaders/baseShader.hpp"
 
 const int MAX_FRAMES_IN_FLIGHT = 2;
 
@@ -109,7 +109,7 @@ const int MAX_FRAMES_IN_FLIGHT = 2;
 //	// Bottom
 //	20, 21, 22, 22, 23, 20,
 //};
-//
+
 
 
 class Application {
@@ -150,21 +150,21 @@ private:
     PhysicalDevice::Ptr mPhysicalDevice;
     LogicalDevice::Ptr mLogicalDevice;
     SwapChain::Ptr mSwapChain;
+    CommandPool::Ptr mCommandPool;
     RenderPass::Ptr mRenderPass;
     Pipeline::Ptr mPipeline;
-    CommandPool::Ptr mCommandPool;
+    VertexArrayBuffer::Ptr mVertexBuffer;
+    IndexBuffer::Ptr mIndexBuffer;
 
     std::vector<CommandBuffer::Ptr> mCommandBuffers;
     std::vector<Semaphore::Ptr> mImageAvailableSemaphores;
     std::vector<Semaphore::Ptr> mRenderFinishedSemaphores;
     std::vector<Fence::Ptr> mInFlightFences;
 
-    VertexBuffer* mVertexBuffer = nullptr;
-    IndexBuffer* mIndexBuffer = nullptr;
-
+    BaseShader* mBaseShader;
 	UniformBufferManager* mDescriptorManager = nullptr;
 
     int mCurrentFrame = 0;
-    std::atomic<bool> mFramebufferResized{ false };
+    bool mFramebufferResized = false;
 };
 

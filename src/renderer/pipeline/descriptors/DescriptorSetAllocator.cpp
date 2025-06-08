@@ -82,14 +82,13 @@ void DescriptorSetAllocator::updateDescriptorSets(
                     if (!ubResource) {
                         throw std::runtime_error("Resource type mismatch for uniform buffer");
                     }
-                    const auto& bufferData = ubResource->getData();
+                    auto bufferData = ubResource->getData();
 
                     bufferInfos.push_back(VkDescriptorBufferInfo{
-                        bufferData.buffer,
+                        bufferData->getBuffer(),
                         0,
-                        binding.dataSize
+                        bufferData->getSize()
                         });
-
                     write.pBufferInfo = &bufferInfos.back();
                 }
                 else if (write.descriptorType == VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER) {
@@ -104,7 +103,6 @@ void DescriptorSetAllocator::updateDescriptorSets(
                         texture->getImageView(),
                         VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
                         });
-
                     write.pImageInfo = &imageInfos.back();
                 }
                 writes.push_back(write);

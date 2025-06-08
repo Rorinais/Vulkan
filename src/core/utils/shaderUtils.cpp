@@ -151,18 +151,18 @@ void ShaderUtils::validateSPIRV(const std::vector<uint32_t>& code) {
     }
 }
 
-ShaderStages::ShaderStages(const LogicalDevice::Ptr& logicalDevice) : mLogicalDevice(logicalDevice) {
+ShaderProgram::ShaderProgram(const LogicalDevice::Ptr& logicalDevice) : mLogicalDevice(logicalDevice) {
     mShaderUtils = ShaderUtils::create(logicalDevice);
 }
 
-ShaderStages::~ShaderStages() {
+ShaderProgram::~ShaderProgram() {
     for (auto module : mShaderModules) {
         vkDestroyShaderModule(mLogicalDevice->getHandle(), module, nullptr);
     }
 }
 
 // 添加GLSL着色器阶段（支持宏）
-void ShaderStages::addGLSLStage(
+void ShaderProgram::addGLSLStage(
     const std::string& filename,
     VkShaderStageFlagBits stage,
     const char* entryPoint,
@@ -177,7 +177,7 @@ void ShaderStages::addGLSLStage(
 }
 
 // 添加预编译的SPIR-V着色器阶段
-void ShaderStages::addSPVStage(
+void ShaderProgram::addSPVStage(
     const std::string& filename,
     VkShaderStageFlagBits stage,
     const char* entryPoint,
@@ -188,7 +188,7 @@ void ShaderStages::addSPVStage(
     mStages.push_back(createStageInfo(module, stage, entryPoint));
 }
 
-void ShaderStages::addGLSLStringStage(
+void ShaderProgram::addGLSLStringStage(
     const std::string& sourceCode,
     VkShaderStageFlagBits stage,
     const char* entryPoint,
@@ -202,7 +202,7 @@ void ShaderStages::addGLSLStringStage(
     mStages.push_back(createStageInfo(module, stage, entryPoint));
 }
 
-VkPipelineShaderStageCreateInfo ShaderStages::createStageInfo(
+VkPipelineShaderStageCreateInfo ShaderProgram::createStageInfo(
     VkShaderModule module,
     VkShaderStageFlagBits stage,
     const char* entryPoint

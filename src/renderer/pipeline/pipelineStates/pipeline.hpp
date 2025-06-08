@@ -68,7 +68,7 @@ public:
 	void createGraphicsPipeline();
 
 	//必须指定
-	void setShaderStage(ShaderStages::Ptr shaderStates);
+	void setShaderStage(ShaderProgram::Ptr shaderStates);
 	void setRenderPass(RenderPass::Ptr renderPass);
 	void setPipelineLayout(PipelineLayout::Ptr pipelineLayout);
 	void setViewportState(Viewport viewport);
@@ -99,7 +99,7 @@ private:
 	LogicalDevice::Ptr mLogicalDevice;
 	RenderPass::Ptr mRenderPass;
 	PipelineLayout::Ptr mPipelineLayout;
-	ShaderStages::Ptr mShaderStages;
+	ShaderProgram::Ptr mShaderStages;
 
 	VkPipeline mGraphicsPipeline = VK_NULL_HANDLE;
 	VkPipeline mBasePipelineHandle = VK_NULL_HANDLE;

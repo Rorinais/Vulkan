@@ -16,19 +16,20 @@ void ResourceManager::createResources(const DescriptorLayoutManager& layoutManag
             uint32_t bindingIndex = binding.layoutBinding.binding;
 
             if (binding.layoutBinding.descriptorType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER) {
-                // 为每个帧创建独立的UniformBuffer
                 for (uint32_t i = 0; i < imageCount; ++i) {
-                    auto resource = std::make_shared<UniformBufferResource>(mDevice, binding.dataSize);
+                    auto resource = std::make_shared<UniformBufferResource>(
+                        mDevice, mCommandPool, binding.dataSize
+                    );
                     mResources[set][bindingIndex].push_back(resource);
                     mAllResources.push_back(resource);
                 }
             }
             else if (binding.layoutBinding.descriptorType == VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER) {
-                // 所有帧共享同一个纹理资源
-                auto resource = std::make_shared<TextureResource>(mDevice, mCommandPool, binding.texturePath.c_str());
+                auto resource = std::make_shared<TextureResource>(
+                    mDevice, mCommandPool, binding.texturePath.c_str()
+                );
                 mAllResources.push_back(resource);
 
-                // 为所有帧使用同一个纹理资源指针
                 std::vector<DescriptorResource::Ptr> resources(imageCount, resource);
                 mResources[set][bindingIndex] = resources;
             }
@@ -42,5 +43,5 @@ DescriptorResource* ResourceManager::getResource(uint32_t set, uint32_t binding,
 
 void ResourceManager::cleanup() {
     mResources.clear();
-    mAllResources.clear(); // 智能指针会自动释放资源
+    mAllResources.clear();
 }

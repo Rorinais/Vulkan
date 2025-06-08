@@ -1,4 +1,4 @@
-#include"VulkanDebug.hpp"
+#include"vulkanDebug.hpp"
 
 void DestroyDebugUtilsMessengerEXT(
     VkInstance instance,

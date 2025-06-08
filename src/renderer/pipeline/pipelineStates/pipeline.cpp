@@ -68,7 +68,7 @@ void Pipeline::cleanup() {
     }
 }
 
-void Pipeline::setShaderStage(ShaderStages::Ptr shaderStates) {
+void Pipeline::setShaderStage(ShaderProgram::Ptr shaderStates) {
     mShaderStages = shaderStates;
 }
 void Pipeline::setVertexInputState(VertexInput vertexInput) {
