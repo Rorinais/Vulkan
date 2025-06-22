@@ -1,7 +1,7 @@
 #pragma once
 #include "../../../base.hpp"
-#include "../../core/context/logicalDevice.hpp"
-#include "../../core/commands/commandPool.hpp"
+#include "../../core/VulkanCore/VulkanCore.hpp"
+#include "../../core/FrameContext/FrameContext.hpp"
 #include <stdexcept>
 #include <cstring>
 

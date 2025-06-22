@@ -23,4 +23,3 @@ private:
 
 	glm::vec3 mOrigin{ 0.0f };
 };
-

@@ -1,55 +1,45 @@
 #pragma once 
-#include "../../../base.hpp"
 #include "../../buffers/IndexBuffer.hpp"
 #include "../../buffers/VertexArrayBuffer.hpp"
 #include "../boundingBox/BoundingBox.hpp"
 #include "../geometry/Geometry.hpp"
-#include "../materials/Material.hpp"
+//#include ".././../materials/DefaultMaterial.hpp"
+#include "../../../core/VulkanCore/VulkanCore.hpp"
+#include "../../../core/FrameContext/FrameContext.hpp"
 
 class Mesh {
 public:
-    Mesh(Geometry geometry, Material::Ptr material)
-        : geometry(std::move(geometry)), material(material) {
+	Mesh() = default;
+
+    Mesh(Geometry::Ptr geo, const LogicalDevice::Ptr& logicalDevice,const CommandPool::Ptr &commandPool): geometry(std::move(geo)) {
+        vertexBuffer = VertexArrayBuffer::create(logicalDevice, commandPool);
+
+		std::vector<glm::vec3> poss;
+        for (auto &pos : geometry->getVertices()) {
+			poss.push_back(pos.position);
+        }
+
+        vertexBuffer->beginBinding(0);
+        vertexBuffer->addAttribute(0, VK_FORMAT_R32G32B32_SFLOAT, poss);
+        vertexBuffer->finishBinding();
+
+		indexBuffer = IndexBuffer::create(logicalDevice, commandPool);
+        indexBuffer->loadData(geometry->getIndices());
     }
 
-    // 变换操作
-    void setTransform(const glm::mat4& transform);
-    void setMaterial(const std::string& matID);
-
-    // 渲染准备
-    void uploadToGPU();
-    void bind() const;
-
-    // 数据访问
-    const Geometry& getGeometry() const { return geometry; }
-    Material::Ptr getMaterial() const { return material; }
-    const BoundingBox& getBoundingBox() const { return boundingBox; }
-
+    //void setTransform(const glm::mat4& transform);
+    //void setMaterial(const std::string& matID);
+    //void uploadToGPU();
+    //void bind() const;
+	Geometry::Ptr getGeometry() const { return geometry; }
+    std::string getMaterial() const { return materialID; }
+	VertexArrayBuffer::Ptr getVertexBuffer() const { return vertexBuffer; }
+    IndexBuffer::Ptr getIndexBuffer() const { return indexBuffer; }
 private:
     std::string name = "DefaultMesh";
     std::string materialID = "0";
     VertexArrayBuffer::Ptr vertexBuffer;
     IndexBuffer::Ptr indexBuffer;
 
-    Geometry geometry;
-    std::unique_ptr<BoundingBox> boundingBox; 
-    std::unique_ptr<BoundingBox> worldBoundingBox;  
-
-
-
-    void calculateBoundingBox() {
-        boundingBox->reset();
-        for (const auto& vertex : geometry.vertices) {
-            boundingBox->expand(vertex.position);
-        }
-        updateWorldBoundingBox();
-    }
-
-    void updateWorldBoundingBox() {
-        if (!worldBoundingBox) {
-            worldBoundingBox.reset(boundingBox->clone());
-        }
-        *worldBoundingBox = *boundingBox;  
-        worldBoundingBox->transform(transform);  
-    }
+    Geometry::Ptr geometry;
 };

@@ -31,6 +31,10 @@ public:
     void pollEvents() const;
     VkSurfaceKHR createSurface(VkInstance instance)const;
 
+    float getAspectRatio() const noexcept {
+        return static_cast<float>(mConfig.width) / static_cast<float>(mConfig.height);
+	}
+
 private:
     static void terminateGLFW();
 

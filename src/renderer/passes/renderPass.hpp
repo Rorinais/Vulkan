@@ -1,57 +1,43 @@
 #pragma once
-#include "../../base.hpp"
-#include"../core/context/logicalDevice.hpp"
+#include <vulkan/vulkan.h>
+#include <memory>
+#include "../core/VulkanCore/VulkanCore.hpp"
+#include "../core/WindowContext/WindowContext.hpp"
+#include "../core/FrameContext/FrameContext.hpp"
+#include "../resources/models/mesh/Mesh.hpp"
+
+// 前向声明
+class CommandPool;
+class CommandBuffer;
+class ShaderProgram;
 
 class RenderPass {
 public:
-    enum class Type {
-        Color,
-        Depth
-    };
-
-    struct DependencyConfig {
-        uint32_t srcSubpass;
-        uint32_t dstSubpass;
-        VkPipelineStageFlags srcStageMask;
-        VkPipelineStageFlags dstStageMask;
-        VkAccessFlags srcAccessMask;
-        VkAccessFlags dstAccessMask;
-        VkDependencyFlags dependencyFlags = 0;
-    };
-
-    struct AttachmentConfig {
-        Type type;
-        VkFormat format;
-        VkImageLayout initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-        VkImageLayout finalLayout;
-        VkAttachmentLoadOp loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-        VkAttachmentStoreOp storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-    };
-
     using Ptr = std::shared_ptr<RenderPass>;
-    static Ptr create(VkDevice logicalDevice) { return std::make_shared<RenderPass>(logicalDevice); }
 
-    RenderPass(VkDevice logicalDevice);
-    ~RenderPass();
-
-    RenderPass& addAttachment(const AttachmentConfig& config);
-    RenderPass& addDependency(const DependencyConfig& config);
-    void build();
-
-    VkRenderPass getHandle() const { return mRenderPass; }
-
-private:
-    void setupDefaultDependencies();
-    void validateAttachments() const;
-
-    struct AttachmentInfo {
-        VkAttachmentDescription desc;
-        VkAttachmentReference ref;
-        Type type;
+    enum Type {
+        MAIN,
+        SHADOW,
+        POST_PROCESS
     };
 
-    VkDevice mLogicalDevice;
-    std::vector<AttachmentInfo> mAttachments;
-    std::vector<VkSubpassDependency> mDependencies;
+    explicit RenderPass(Type type) : mType(type) {}
+    virtual ~RenderPass() = default;
+
+    // 纯虚函数声明
+    virtual void destroy() = 0;
+    virtual void init(VulkanCore::Ptr vulkanCore, WindowContext::Ptr windowContext) = 0;
+    virtual void beginFrame(uint32_t imageIndex) = 0;
+    virtual void recordCommands(CommandBuffer::Ptr cmdBuffer, uint32_t imageIndex, uint32_t frameIndex) = 0;
+    virtual void endFrame() = 0;
+    virtual void onSwapChainRecreated() = 0;
+    virtual void build() = 0;
+    virtual VkFramebuffer getFramebuffer(uint32_t imageIndex) const = 0;
+    virtual VkRenderPass getHandle() const = 0;
+
+    Type getType() const { return mType; }
+
+protected:
     VkRenderPass mRenderPass = VK_NULL_HANDLE;
+    Type mType;
 };

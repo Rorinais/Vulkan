@@ -1,5 +1,5 @@
 #include "../base.hpp"
-#include "../core/application/application.hpp"
+#include "../core/application/app.hpp"
 
 
 int main() {
@@ -7,7 +7,7 @@ int main() {
 	_putenv_s("VK_LAYER_PATH", "layers");
 #endif 
 
-	Application app;
+	App app;
 	app.run();
 
 	return 0;

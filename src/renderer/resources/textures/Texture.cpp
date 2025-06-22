@@ -15,9 +15,9 @@ void Texture::loadTexture(const char* imagePath) {
 }
 
 Texture::Texture(
-    const LogicalDevice::Ptr& logicalDevice, 
-    const CommandPool::Ptr& commandPool, 
-    const char* imagePath
+    const LogicalDevice::Ptr& logicalDevice,
+    const char* imagePath,
+    CommandPool::Ptr commandPool
 ) : mLogicalDevice(logicalDevice),mCommandPool(commandPool),mType(Type::Color) {
     loadTexture(imagePath);
     VkExtent2D extent = { static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight) };
@@ -59,10 +59,11 @@ Texture::Texture(
 // 深度纹理专用构造函数
 Texture::Texture(
     const LogicalDevice::Ptr& logicalDevice,
-    const CommandPool::Ptr& commandPool,
-    Type type, 
-    VkExtent2D extent
-) : mLogicalDevice(logicalDevice), mCommandPool(commandPool),mType(type) {
+    Type type,
+    VkExtent2D extent,
+    CommandPool::Ptr commandPool)
+    : mLogicalDevice(logicalDevice), mType(type), mCommandPool(commandPool) {
+
     if (type != Type::Depth)
         throw std::runtime_error("Invalid constructor for non-depth texture");
 
@@ -77,12 +78,19 @@ Texture::Texture(
     allocateMemory(VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
     createImageView();
 
-    transitionImageLayout(mImage,
-        VK_IMAGE_LAYOUT_UNDEFINED,
-        VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+    // 仅在命令池可用时执行布局转换
+    if (mCommandPool) {
+        transitionImageLayout(mImage,
+            VK_IMAGE_LAYOUT_UNDEFINED,
+            VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+    }
 }
 
 Texture::~Texture() {
+    cleanup();
+}
+
+void Texture::cleanup() {
     if (mImageView != VK_NULL_HANDLE) {
         vkDestroyImageView(mLogicalDevice->getHandle(), mImageView, nullptr);
         mImageView = VK_NULL_HANDLE;
@@ -101,7 +109,6 @@ Texture::~Texture() {
     }
 }
 
-
 void Texture::createImage(VkFormat format, VkExtent2D extent, VkImageUsageFlags usage, VkImageTiling tiling)
 {
     VkImageCreateInfo imageInfo{};
@@ -119,6 +126,32 @@ void Texture::createImage(VkFormat format, VkExtent2D extent, VkImageUsageFlags 
 
     if (vkCreateImage(mLogicalDevice->getHandle(), &imageInfo, nullptr, &mImage) != VK_SUCCESS) {
         throw std::runtime_error("Failed to create image!");
+    }
+}
+
+void Texture::recreate(VkExtent2D newExtent) {
+    if (mType != Type::Depth) {
+        return;
+    }
+
+    cleanup(); // 清理旧资源
+
+    // 重新创建深度纹理
+    mFormat = findSupportedDepthFormat(mLogicalDevice->getPhysicalDevice()->getHandle());
+    createImage(
+        mFormat,
+        newExtent,
+        VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+        VK_IMAGE_TILING_OPTIMAL);
+
+    allocateMemory(VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+    createImageView();
+
+    // 仅在命令池可用时执行布局转换
+    if (mCommandPool) {
+        transitionImageLayout(mImage,
+            VK_IMAGE_LAYOUT_UNDEFINED,
+            VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
     }
 }
 
@@ -315,6 +348,10 @@ void Texture::copyBufferToImage(VkBuffer buffer, VkImage image,
 }
 
 VkCommandBuffer Texture::beginSingleTimeCommands() {
+    if (!mCommandPool) {
+        throw std::runtime_error("Command pool not available for texture operations");
+    }
+
     VkCommandBufferAllocateInfo allocInfo{};
     allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
     allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;

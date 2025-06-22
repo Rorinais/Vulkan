@@ -1,7 +1,7 @@
 #pragma once
 #include "../../../base.hpp"
-#include "../../core/context/logicalDevice.hpp"
-#include "../../core/commands/commandPool.hpp"
+#include "../../core/FrameContext/FrameContext.hpp"
+#include "../../core/WindowContext/swapchain.hpp"
 #include <stdexcept>
 
 class Texture {
@@ -12,37 +12,47 @@ public:
     };
 
     using Ptr = std::shared_ptr<Texture>;
-    static Ptr create(const LogicalDevice::Ptr& logicalDevice,
-        const CommandPool::Ptr& commandPool,
-        const char* imagePath) {
-        return std::make_shared<Texture>(logicalDevice, commandPool, imagePath);
+    static Ptr create(
+        const LogicalDevice::Ptr& logicalDevice,
+        const char* imagePath,
+        CommandPool::Ptr commandPool = nullptr) {
+        return std::make_shared<Texture>(logicalDevice, imagePath, commandPool);
     }
 
     Texture(
         const LogicalDevice::Ptr& logicalDevice,
-        const CommandPool::Ptr& commandPool, 
-        const char* imagePath);
+        const char* imagePath,
+        CommandPool::Ptr commandPool = nullptr);
 
-    static Ptr create(const LogicalDevice::Ptr& logicalDevice,
-        const CommandPool::Ptr& commandPool,
+    static Ptr create(
+        const LogicalDevice::Ptr& logicalDevice,
         Type type,
-        VkExtent2D extent) {
-        return std::make_shared<Texture>(logicalDevice, commandPool, type, extent);
+        VkExtent2D extent,
+        CommandPool::Ptr commandPool = nullptr) {
+        return std::make_shared<Texture>(logicalDevice, type, extent, commandPool);
     }
 
     Texture(
-        const LogicalDevice::Ptr& logicalDevice, 
-        const CommandPool::Ptr& commandPool, 
-        Type type, 
-        VkExtent2D extent);
+        const LogicalDevice::Ptr& logicalDevice,
+        Type type,
+        VkExtent2D extent,
+        CommandPool::Ptr commandPool = nullptr);
 
     ~Texture();
+    void cleanup();
+
+    // 添加重新创建方法
+    void recreate(VkExtent2D newExtent);
 
     static VkFormat findSupportedDepthFormat(VkPhysicalDevice physicalDevice);
-    static bool hasStencilComponent(VkFormat format); 
+    static bool hasStencilComponent(VkFormat format);
 
     VkImageView getImageView() const { return mImageView; }
     VkSampler getSampler() const { return mSampler; }
+    int getWidth() const { return texWidth; }
+    int getHeight() const { return texHeight; }
+    VkFormat getFormat() const { return mFormat; }
+    Type getType() const { return mType; }
 
 private:
     LogicalDevice::Ptr mLogicalDevice;
@@ -70,7 +80,7 @@ private:
     void uploadData(const void* data, size_t dataSize, VkExtent2D extent);
     void transitionImageLayout(VkImage image, VkImageLayout oldLayout, VkImageLayout newLayout);
     void copyBufferToImage(VkBuffer buffer, VkImage image, VkExtent2D extent);
-    uint32_t findMemoryType(uint32_t typeFilter,VkMemoryPropertyFlags properties) const;
+    uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) const;
     VkCommandBuffer beginSingleTimeCommands();
     void endSingleTimeCommands(VkCommandBuffer commandBuffer);
 };

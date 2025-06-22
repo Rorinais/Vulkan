@@ -17,4 +17,8 @@ public:
     );
 
     void uploadData(const void* data, VkDeviceSize size, VkDeviceSize offset = 0);
+
+    void loadData(const std::vector<uint8_t>& data) {
+        uploadData(data.data(), data.size());
+    }
 };

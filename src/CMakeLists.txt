@@ -21,7 +21,6 @@ add_subdirectory(renderer/core)
 add_subdirectory(renderer/passes)
 add_subdirectory(renderer/pipeline)
 add_subdirectory(renderer/resources)
-add_subdirectory(renderer/ecs)
 
 add_executable(${PROJECT_NAME} ${MAIN_SOURCE})
 
@@ -31,7 +30,6 @@ PRIVATE
     window
     application
     resources
-    ecs
 )
 
 function(copy_target_resources TARGET_NAME)

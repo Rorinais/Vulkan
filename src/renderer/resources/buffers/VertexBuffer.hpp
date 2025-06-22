@@ -9,4 +9,8 @@ public:
     VertexBuffer(const LogicalDevice::Ptr& logicalDevice,const CommandPool::Ptr& commandPool);
 
     void uploadData(const void* data, VkDeviceSize size);
+
+    void loadData(const std::vector<float>& vertices) {
+        uploadData(vertices.data(), vertices.size() * sizeof(float));
+    }
 };

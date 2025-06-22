@@ -5,6 +5,7 @@ add_library(passes STATIC ${SRC})
 target_link_libraries(passes PRIVATE
 	BaseInterface
 	core
+	pipeline
 )
 
 
