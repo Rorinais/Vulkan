@@ -15,7 +15,7 @@ App::App() {
     Window::Config config{
         .width = 1280,
         .height = 720,
-        .title = "Vulkan Demo",
+        .title = "StarryEngine",
         .resizable = true,
         .monitorIndex = 0,
         .fullScreen = false,
