@@ -10,8 +10,7 @@ enum class ResourceType {
     VertexBuffer,
     IndexBuffer,
     VertexArray,
-    StorageBuffer,
-    // 可扩展其他类型
+    StorageBuffer
 };
 
 class Resource {
@@ -32,10 +31,10 @@ public:
     virtual bool isReady() const { return true; }
     virtual size_t getMemoryUsage() const = 0;
 
-    // 添加交换链重建处理方法
+    // 交换链重建处理方法
     virtual void onSwapchainRecreated(VkExtent2D newExtent) {}
 
-    // 异步加载支持
+    // 异步加载
     using LoadCallback = std::function<void(Resource*)>;
     virtual void loadAsync(LoadCallback callback = nullptr) {
         if (callback) callback(this);
