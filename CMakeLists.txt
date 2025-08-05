@@ -20,7 +20,7 @@ add_subdirectory(external/assimp)
 add_subdirectory(external/glm)
 add_subdirectory(external/imgui)
 add_subdirectory(external/spdlog)
-#add_subdirectory(external/opencv) //还不需要opencv
+#add_subdirectory(external/opencv) #还不需要opencv
  
 add_subdirectory(src) 
 
